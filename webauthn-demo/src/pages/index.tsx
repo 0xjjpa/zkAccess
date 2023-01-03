@@ -14,6 +14,7 @@ import { Main } from "../components/Main";
 import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { verifyPublicKeyAndSignature } from "../lib/verification";
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
@@ -72,21 +73,22 @@ const Index = () => {
   enum Stage {
     STAGE_0 = "Press the button to kickstart the public keys creation.",
     STAGE_1 = "Created keypair using secure navigator API, loading credential now...",
-    STAGE_2 = "Loaded the credential from the browser."
+    STAGE_2 = "Loaded the credential from the browser.",
   }
   const STAGES = {
-    [Stage.STAGE_1]: 'CREDENTIAL_CREATION',
-    [Stage.STAGE_2]: 'CREDENTIAL_RETRIEVAL'
-  }
+    [Stage.STAGE_1]: "CREDENTIAL_CREATION",
+    [Stage.STAGE_2]: "CREDENTIAL_RETRIEVAL",
+  };
 
   const LOADING_MESSAGE = "Loading...";
   const ONE_SECOND_IN_MS = 1000;
-  const FIVE_SECONDS_IN_MS = ONE_SECOND_IN_MS * 5;
-  const MINIMAL_CALLBACK_TIME = FIVE_SECONDS_IN_MS;
+  const THREE_SECONDS_IN_MS = ONE_SECOND_IN_MS * 3;
+  const MINIMAL_CALLBACK_TIME = THREE_SECONDS_IN_MS;
 
   const [isLoadingProcess, setLoadingProcess] = useState(false);
   const [isLoadingStage, setLoadingStage] = useState(false);
   const [credential, setCredential] = useState<PublicKeyCredential>();
+  const [assertation, setAssertation] = useState<PublicKeyCredential>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
 
   const waitPromise = (stage = "Default stage") => {
@@ -99,31 +101,40 @@ const Index = () => {
     );
   };
 
-  const delay = (cb: () => void) => setTimeout(() => cb(), MINIMAL_CALLBACK_TIME)
+  const delay = (cb: () => void) =>
+    setTimeout(() => cb(), MINIMAL_CALLBACK_TIME);
 
   const createNavigatorCredentials = async (): Promise<PublicKeyCredential> => {
     console.log("🪪 Starting credential processs...");
-    const credential = await navigator.credentials.create(
+    const credential = (await navigator.credentials.create(
       credentialCreationOptions
-    ) as PublicKeyCredential;
+    )) as PublicKeyCredential;
     console.log("🪪 Finished credential processs...", credential);
     return credential;
   };
 
   const loadNavigatorCredentials = async () => {
     console.log("📤 Loading existing credential processs...");
-    const enhancedCredentialRequestOptions = credentialRequestWithAllowedCredentialsInPublicKey(
-      credentialRequestOptions,
-      generateIdList(credential.rawId)
-    );
-    const assertation = await navigator.credentials.get(enhancedCredentialRequestOptions);
+    const enhancedCredentialRequestOptions =
+      credentialRequestWithAllowedCredentialsInPublicKey(
+        credentialRequestOptions,
+        generateIdList(credential.rawId)
+      );
+    const assertation = (await navigator.credentials.get(
+      enhancedCredentialRequestOptions
+    )) as PublicKeyCredential;
     console.log("📤 Finished loading credential processs...", assertation);
+    console.log("Verified?", verifyPublicKeyAndSignature(credential, assertation));
+    return assertation;
   };
 
   const credentialsHandler = async () => {
     setLoadingProcess(true);
     setLoadingStage(true);
-    const [credential] = await Promise.all([createNavigatorCredentials(), waitPromise(STAGES[Stage.STAGE_1])]);
+    const [credential] = await Promise.all([
+      createNavigatorCredentials(),
+      waitPromise(STAGES[Stage.STAGE_1]),
+    ]);
     setLoadingStage(false);
     setStage(Stage.STAGE_1);
     delay(() => setCredential(credential));
@@ -132,20 +143,28 @@ const Index = () => {
   useEffect(() => {
     const loadCredentials = async () => {
       setLoadingStage(true);
-      await Promise.all([loadNavigatorCredentials(), waitPromise(STAGES[Stage.STAGE_2])]);
+      const [assertation] = await Promise.all([
+        loadNavigatorCredentials(),
+        waitPromise(STAGES[Stage.STAGE_2]),
+      ]);
       setLoadingStage(false);
       setStage(Stage.STAGE_2);
-    }
+      delay(() => setAssertation(assertation));
+    };
     credential && loadCredentials();
     return () => setCredential(undefined);
-  }, [credential])
+  }, [credential]);
 
   return (
     <Container height="100vh">
       <Hero />
       <Main>
-        <Button isLoading={isLoadingProcess} onClick={credentialsHandler}>Start process.</Button>
-        <Text color="text">{isLoadingStage ? LOADING_MESSAGE : currentStage}</Text>
+        <Button isLoading={isLoadingProcess} onClick={credentialsHandler}>
+          Start process.
+        </Button>
+        <Text color="text">
+          {isLoadingStage ? LOADING_MESSAGE : currentStage}
+        </Text>
       </Main>
 
       <DarkModeSwitch />
