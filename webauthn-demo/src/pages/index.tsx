@@ -15,11 +15,12 @@ import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
+import { createZkAttestProofAndVerify } from "../lib/zkecdsa";
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
-    id: "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us80.gitpod.io",
+    id: "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
   },
   user: {
     id: new Uint8Array(16),
@@ -124,7 +125,9 @@ const Index = () => {
       enhancedCredentialRequestOptions
     )) as PublicKeyCredential;
     console.log("📤 Finished loading credential processs...", assertation);
-    console.log("Verified?", verifyPublicKeyAndSignature(credential, assertation));
+    const verification = await verifyPublicKeyAndSignature(credential, assertation);
+    console.log("🔑 Verified?", verification.isValid);
+    console.log("⚫️ Verified?", await createZkAttestProofAndVerify(credential, verification.data, verification.signature));
     return assertation;
   };
 

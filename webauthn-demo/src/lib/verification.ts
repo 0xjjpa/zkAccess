@@ -1,5 +1,10 @@
+export type Verification = {
+  isValid: boolean,
+  signature: Uint8Array,
+  data: Uint8Array
+}
 
-export const verifyPublicKeyAndSignature = async (credential: PublicKeyCredential, assertation: PublicKeyCredential): Promise<boolean> => {
+export const verifyPublicKeyAndSignature = async (credential: PublicKeyCredential, assertation: PublicKeyCredential): Promise<Verification> => {
   // verify signature on server
   const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey()
   const response = await assertation.response as AuthenticatorAssertionResponse;
@@ -69,5 +74,5 @@ export const verifyPublicKeyAndSignature = async (credential: PublicKeyCredentia
   // verified is now true!
   console.log('verified', verified)
 
-  return verified;
+  return { isValid: verified, signature: rawSignature, data: signedData };
 }
