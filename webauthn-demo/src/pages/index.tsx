@@ -75,6 +75,8 @@ const Index = () => {
     STAGE_0 = "Press the button to kickstart the public keys creation.",
     STAGE_1 = "Created keypair using secure navigator API, loading credential now...",
     STAGE_2 = "Loaded the credential from the browser.",
+    STAGE_SUCCESS_ASSERTATION = 'Successfully created a zkECDSA proof via Passkey',
+    STAGE_FAILED_ASSERTATION = 'Unable to create a zkECDSA proof via Passkey'
   }
   const STAGES = {
     [Stage.STAGE_1]: "CREDENTIAL_CREATION",
@@ -89,7 +91,7 @@ const Index = () => {
   const [isLoadingProcess, setLoadingProcess] = useState(false);
   const [isLoadingStage, setLoadingStage] = useState(false);
   const [credential, setCredential] = useState<PublicKeyCredential>();
-  const [assertation, setAssertation] = useState<PublicKeyCredential>();
+  const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
 
   const waitPromise = (stage = "Default stage") => {
@@ -127,8 +129,9 @@ const Index = () => {
     console.log("📤 Finished loading credential processs...", assertation);
     const verification = await verifyPublicKeyAndSignature(credential, assertation);
     console.log("🔑 Verified?", verification.isValid);
-    console.log("⚫️ Verified?", await createZkAttestProofAndVerify(credential, verification.data, verification.signature));
-    return assertation;
+    const isAssertationValid = await createZkAttestProofAndVerify(credential, verification.data, verification.signature)
+    console.log("⚫️ Verified?", isAssertationValid);
+    return isAssertationValid;
   };
 
   const credentialsHandler = async () => {
@@ -157,6 +160,12 @@ const Index = () => {
     credential && loadCredentials();
     return () => setCredential(undefined);
   }, [credential]);
+
+  useEffect(() => {
+    isAssertationValid != undefined && setStage(isAssertationValid ? Stage.STAGE_SUCCESS_ASSERTATION : Stage.STAGE_FAILED_ASSERTATION);
+    setLoadingProcess(false);
+    return () => setAssertation(undefined);
+  }, [isAssertationValid])
 
   return (
     <Container height="100vh">
