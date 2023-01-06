@@ -8,6 +8,8 @@ import {
   Button,
   Stack,
   SimpleGrid,
+  Flex,
+  Box,
 } from "@chakra-ui/react";
 
 import { Hero } from "../components/Hero";
@@ -19,6 +21,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
 import { createZkAttestProofAndVerify, importPublicKey } from "../lib/zkecdsa";
 import { keyToInt } from "@cloudflare/zkp-ecdsa";
+import Jazzicon from "react-jazzicon";
 
 const overloadOptions = (
   name: string,
@@ -96,10 +99,10 @@ const credentialRequestWithAllowedCredentialsInPublicKey = (
 const Index = () => {
   enum Stage {
     STAGE_0 = "Register to create keys, and then create proofs with them.",
-    STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now.",
-    STAGE_2 = "Loaded the credential from the browser.",
-    STAGE_SUCCESS_ASSERTATION = "Successfully created a zkECDSA proof via Passkey.",
-    STAGE_FAILED_ASSERTATION = "Unable to create a zkECDSA proof via Passkey.",
+    STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now to showcase access.",
+    STAGE_2 = "Loading the credential from the browser...",
+    STAGE_SUCCESS_ASSERTATION = "The zkECDSA proof created via Passkey was valid. Try removing your key (click on your Key) and do “Proof” again.",
+    STAGE_FAILED_ASSERTATION = "The zkECDSA proof created via Passkey is now invalid since your public key is gone from the keyring. If you add it again, it should work.",
   }
   const STAGES = {
     [Stage.STAGE_1]: "CREDENTIAL_CREATION",
@@ -113,11 +116,13 @@ const Index = () => {
 
   const [isLoadingProcess, setLoadingProcess] = useState(false);
   const [isLoadingStage, setLoadingStage] = useState(false);
-  const [credentials, setCredentials] = useState<
-    Map<string, PublicKeyCredential>
-  >(new Map());
+  const [credential, setCredential] = useState<PublicKeyCredential>();
+  const [key, setKey] = useState<bigint>();
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
+
+  const EMPTY_KEYS = [BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)];
+  const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
 
   const waitPromise = (stage = "Default stage") => {
     console.log(`⏳ Starting stage ${stage}, waiting ${MINIMAL_CALLBACK_TIME}`);
@@ -160,10 +165,7 @@ const Index = () => {
       assertation
     );
     console.log("🔑 Verified?", verification.isValid);
-    const listKeys = await Promise.all(Array.from(credentials.values()).map(async(credential) => {
-      const key = await importPublicKey(credential);
-      return await keyToInt(key)
-    }));
+    const listKeys = keyring;
     const isAssertationValid = await createZkAttestProofAndVerify(
       listKeys,
       credential,
@@ -183,7 +185,11 @@ const Index = () => {
     ]);
     setLoadingStage(false);
     setStage(Stage.STAGE_1);
-    delay(() => setCredentials((map) => new Map(map.set(email, credential))));
+    delay(async () => {
+      const key = await importPublicKey(credential);
+      setKey(await keyToInt(key));
+      setCredential(credential);
+    });
   };
 
   const loadCredentialsHandler = async (credential: PublicKeyCredential) => {
@@ -198,9 +204,10 @@ const Index = () => {
   };
 
   useEffect(() => {
-    console.log("🪪 Credentials Stored", credentials);
+    console.log("🪪 Credential Stored", credential);
     setLoadingProcess(false);
-  }, [credentials]);
+    credential && key && setKeys([key].concat(EMPTY_KEYS));
+  }, [credential, key]);
 
   useEffect(() => {
     isAssertationValid != undefined &&
@@ -210,7 +217,6 @@ const Index = () => {
           : Stage.STAGE_FAILED_ASSERTATION
       );
     setLoadingProcess(false);
-    return () => setAssertation(undefined);
   }, [isAssertationValid]);
 
   return (
@@ -224,40 +230,58 @@ const Index = () => {
           zero-knowledge proofs of an ECDSA-P256 signature.
         </Text>
         <Text color="text">
-          Using both, anyone can register to a web service without disclosing
-          personal information, while generation proofs-of-access that can be
-          used to grant access to services or other offline workflows (e.g.
-          tickets for events).
+          Using both, you can register a public key to a web service. When prompted
+          for any sort of access, you can generate a zkAttest showcasing your
+          key is registered, allowing you to be granted access to services or
+          other offline workflows (e.g. tickets for events).
         </Text>
-        <SimpleGrid spacing={2} columns={[2,2,4,4]}>
-          <Button
-            disabled={!!credentials.get(USER_1.email)}
-            isLoading={isLoadingProcess}
-            onClick={() => credentialsHandler(USER_1.email, USER_1.name)}
-          >
-            Register 🔑 (1)
-          </Button>
-          <Button
-            disabled={!!credentials.get(USER_2.email)}
-            isLoading={isLoadingProcess}
-            onClick={() => credentialsHandler(USER_2.email, USER_2.name)}
-          >
-            Register 🔑 (2)
-          </Button>
-          <Button
-            isLoading={isLoadingStage}
-            disabled={!credentials.get(USER_1.email)}
-            onClick={() => loadCredentialsHandler(credentials.get(USER_1.email))}
-          >
-            Proof 🧾 (1)
-          </Button>
-          <Button
-            isLoading={isLoadingStage}
-            disabled={!credentials.get(USER_2.email)}
-            onClick={() => loadCredentialsHandler(credentials.get(USER_2.email))}
-          >
-            Proof 🧾 (2)
-          </Button>
+        <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
+          <SimpleGrid spacing={2} columns={2}>
+            <Button
+              size="sm"
+              disabled={!credential ? false : keyring[0] == key ? true : false}
+              isLoading={isLoadingProcess}
+              onClick={() => {
+                !credential
+                  ? credentialsHandler(USER_1.email, USER_1.name)
+                  : setKeys([key].concat(EMPTY_KEYS));
+              }}
+            >
+              {!credential ? "Register 🔑" : "Re-add key 🔑"}
+            </Button>
+            <Button
+              size="sm"
+              isLoading={isLoadingStage}
+              disabled={!credential}
+              onClick={() => loadCredentialsHandler(credential)}
+            >
+              {`Proof ${
+                isAssertationValid == undefined
+                  ? "🧾"
+                  : isAssertationValid
+                  ? "✅"
+                  : "❌"
+              }`}
+            </Button>
+          </SimpleGrid>
+          <Flex justifyContent="space-between" alignItems="center">
+            <Code>Keys:</Code>
+            {keyring.map((keyAsInt) => (
+              <Flex
+                key={Number(keyAsInt)}
+                bg={key == keyAsInt ? "green.900" : "red.900"}
+                borderRadius="50%"
+                p="2"
+                onClick={() => {
+                  if (key == keyAsInt) {
+                    setKeys(keyring.filter((key) => key != keyAsInt));
+                  }
+                }}
+              >
+                <Jazzicon diameter={20} seed={Number(keyAsInt)} />
+              </Flex>
+            ))}
+          </Flex>
         </SimpleGrid>
         <Text color="text">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
