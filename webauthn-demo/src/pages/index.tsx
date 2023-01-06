@@ -39,7 +39,7 @@ const USER = {
   name: "Demo User",
 };
 
-const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io"}`
+const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io"}`
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
