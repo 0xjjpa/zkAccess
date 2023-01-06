@@ -21,9 +21,9 @@ export const importPublicKey = async (credential: PublicKeyCredential): Promise<
   return key;
 }
 
-export const generateListOfKeys = async (publicKey: CryptoKey): Promise<bigint[]> => {
-  const listKeys = [BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)];
+export const generateListOfKeys = async (listKeys: bigint[], publicKey: CryptoKey): Promise<bigint[]> => {
   listKeys.unshift(await keyToInt(publicKey));
+  console.log("📋 List of Keys", listKeys);
   return listKeys;
 }
 
@@ -34,9 +34,10 @@ export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: Cryp
     msgHash,
     signature,
     publicKey,
-    0, // position of the public key in the list.
+    0, // It’s always 0 because we first unshift the key we are validating.
     listKeys
   );
+  console.log("🧾 ZKAttest Proof", zkAttestProof);
   return { proof: zkAttestProof, params };
 }
 
@@ -45,10 +46,10 @@ export const verifyZkAttestProof = async(msgHash: Uint8Array, listKeys: bigint[]
   return valid;
 }
 
-export const createZkAttestProofAndVerify = async(credential: PublicKeyCredential, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
+export const createZkAttestProofAndVerify = async(keys: bigint[], credential: PublicKeyCredential, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
   const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
   const key = await importPublicKey(credential);
-  const listKeys = await generateListOfKeys(key);
+  const listKeys = await generateListOfKeys(keys, key);
   const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);
   const isValid = await verifyZkAttestProof(msgHash, listKeys, attestation);
   console.log("Is ZkProof Valid?", isValid);

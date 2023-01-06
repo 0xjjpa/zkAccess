@@ -7,6 +7,7 @@ import {
   ListItem,
   Button,
   Stack,
+  SimpleGrid,
 } from "@chakra-ui/react";
 
 import { Hero } from "../components/Hero";
@@ -16,7 +17,8 @@ import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
-import { createZkAttestProofAndVerify } from "../lib/zkecdsa";
+import { createZkAttestProofAndVerify, importPublicKey } from "../lib/zkecdsa";
+import { keyToInt } from "@cloudflare/zkp-ecdsa";
 
 const overloadOptions = (
   name: string,
@@ -93,11 +95,11 @@ const credentialRequestWithAllowedCredentialsInPublicKey = (
 
 const Index = () => {
   enum Stage {
-    STAGE_0 = "Press the button to kickstart the public keys creation.",
+    STAGE_0 = "Register to create keys, and then create proofs with them.",
     STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now.",
     STAGE_2 = "Loaded the credential from the browser.",
-    STAGE_SUCCESS_ASSERTATION = "Successfully created a zkECDSA proof via Passkey",
-    STAGE_FAILED_ASSERTATION = "Unable to create a zkECDSA proof via Passkey",
+    STAGE_SUCCESS_ASSERTATION = "Successfully created a zkECDSA proof via Passkey.",
+    STAGE_FAILED_ASSERTATION = "Unable to create a zkECDSA proof via Passkey.",
   }
   const STAGES = {
     [Stage.STAGE_1]: "CREDENTIAL_CREATION",
@@ -158,7 +160,12 @@ const Index = () => {
       assertation
     );
     console.log("🔑 Verified?", verification.isValid);
+    const listKeys = await Promise.all(Array.from(credentials.values()).map(async(credential) => {
+      const key = await importPublicKey(credential);
+      return await keyToInt(key)
+    }));
     const isAssertationValid = await createZkAttestProofAndVerify(
+      listKeys,
       credential,
       verification.data,
       verification.signature
@@ -191,20 +198,7 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // const loadCredentials = async () => {
-    //   setLoadingStage(true);
-    //   const [assertation] = await Promise.all([
-    //     loadNavigatorCredentials(),
-    //     waitPromise(STAGES[Stage.STAGE_2]),
-    //   ]);
-    //   setLoadingStage(false);
-    //   setStage(Stage.STAGE_2);
-    //   delay(() => setAssertation(assertation));
-    // };
-    // credential && loadCredentials();
-    // return () => setCredential(undefined);
     console.log("🪪 Credentials Stored", credentials);
-    // @TODO: Remove this to match new workflow.
     setLoadingProcess(false);
   }, [credentials]);
 
@@ -235,7 +229,7 @@ const Index = () => {
           used to grant access to services or other offline workflows (e.g.
           tickets for events).
         </Text>
-        <Stack direction="row" spacing={4} align="center">
+        <SimpleGrid spacing={2} columns={[2,2,4,4]}>
           <Button
             disabled={!!credentials.get(USER_1.email)}
             isLoading={isLoadingProcess}
@@ -264,7 +258,7 @@ const Index = () => {
           >
             Proof 🧾 (2)
           </Button>
-        </Stack>
+        </SimpleGrid>
         <Text color="text">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
         </Text>
