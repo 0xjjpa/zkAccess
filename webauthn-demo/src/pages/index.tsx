@@ -42,7 +42,7 @@ const USER = {
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
-    id: process.env.VERCEL_URL ? process.env.VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
+    id: process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
   },
   user: {
     id: new Uint8Array(16),
