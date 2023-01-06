@@ -6,6 +6,7 @@ import {
   ListIcon,
   ListItem,
   Button,
+  Stack,
 } from "@chakra-ui/react";
 
 import { Hero } from "../components/Hero";
@@ -17,6 +18,26 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
 import { createZkAttestProofAndVerify } from "../lib/zkecdsa";
 
+const overloadOptions = (
+  name: string,
+  email: string,
+  options: CredentialCreationOptions
+) => {
+  options.publicKey.user.name = email;
+  options.publicKey.user.displayName = name;
+  return options;
+};
+
+const USER_1 = {
+  email: "user-1@demo.com",
+  name: "Demo User 1",
+};
+
+const USER_2 = {
+  email: "user-2@demo.com",
+  name: "Demo User 2",
+};
+
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
@@ -24,8 +45,8 @@ const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   },
   user: {
     id: new Uint8Array(16),
-    name: "user@webauthn.demo",
-    displayName: "Demo User",
+    name: "template@webauthn.demo",
+    displayName: "Template",
   },
   challenge: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
   pubKeyCredParams: [{ type: "public-key", alg: -7 }],
@@ -73,10 +94,10 @@ const credentialRequestWithAllowedCredentialsInPublicKey = (
 const Index = () => {
   enum Stage {
     STAGE_0 = "Press the button to kickstart the public keys creation.",
-    STAGE_1 = "Created keypair using secure navigator API, loading credential now...",
+    STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now.",
     STAGE_2 = "Loaded the credential from the browser.",
-    STAGE_SUCCESS_ASSERTATION = 'Successfully created a zkECDSA proof via Passkey',
-    STAGE_FAILED_ASSERTATION = 'Unable to create a zkECDSA proof via Passkey'
+    STAGE_SUCCESS_ASSERTATION = "Successfully created a zkECDSA proof via Passkey",
+    STAGE_FAILED_ASSERTATION = "Unable to create a zkECDSA proof via Passkey",
   }
   const STAGES = {
     [Stage.STAGE_1]: "CREDENTIAL_CREATION",
@@ -90,7 +111,9 @@ const Index = () => {
 
   const [isLoadingProcess, setLoadingProcess] = useState(false);
   const [isLoadingStage, setLoadingStage] = useState(false);
-  const [credential, setCredential] = useState<PublicKeyCredential>();
+  const [credentials, setCredentials] = useState<
+    Map<string, PublicKeyCredential>
+  >(new Map());
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
 
@@ -107,16 +130,19 @@ const Index = () => {
   const delay = (cb: () => void) =>
     setTimeout(() => cb(), MINIMAL_CALLBACK_TIME);
 
-  const createNavigatorCredentials = async (): Promise<PublicKeyCredential> => {
+  const createNavigatorCredentials = async (
+    email: string,
+    name: string
+  ): Promise<PublicKeyCredential> => {
     console.log("🪪 Starting credential processs...");
     const credential = (await navigator.credentials.create(
-      credentialCreationOptions
+      overloadOptions(name, email, credentialCreationOptions)
     )) as PublicKeyCredential;
     console.log("🪪 Finished credential processs...", credential);
     return credential;
   };
 
-  const loadNavigatorCredentials = async () => {
+  const loadNavigatorCredentials = async (credential: PublicKeyCredential) => {
     console.log("📤 Loading existing credential processs...");
     const enhancedCredentialRequestOptions =
       credentialRequestWithAllowedCredentialsInPublicKey(
@@ -127,53 +153,118 @@ const Index = () => {
       enhancedCredentialRequestOptions
     )) as PublicKeyCredential;
     console.log("📤 Finished loading credential processs...", assertation);
-    const verification = await verifyPublicKeyAndSignature(credential, assertation);
+    const verification = await verifyPublicKeyAndSignature(
+      credential,
+      assertation
+    );
     console.log("🔑 Verified?", verification.isValid);
-    const isAssertationValid = await createZkAttestProofAndVerify(credential, verification.data, verification.signature)
+    const isAssertationValid = await createZkAttestProofAndVerify(
+      credential,
+      verification.data,
+      verification.signature
+    );
     console.log("⚫️ Verified?", isAssertationValid);
     return isAssertationValid;
   };
 
-  const credentialsHandler = async () => {
+  const credentialsHandler = async (email: string, name: string) => {
     setLoadingProcess(true);
     setLoadingStage(true);
     const [credential] = await Promise.all([
-      createNavigatorCredentials(),
+      createNavigatorCredentials(email, name),
       waitPromise(STAGES[Stage.STAGE_1]),
     ]);
     setLoadingStage(false);
     setStage(Stage.STAGE_1);
-    delay(() => setCredential(credential));
+    delay(() => setCredentials((map) => new Map(map.set(email, credential))));
+  };
+
+  const loadCredentialsHandler = async (credential: PublicKeyCredential) => {
+    setLoadingStage(true);
+    const [assertation] = await Promise.all([
+      loadNavigatorCredentials(credential),
+      waitPromise(STAGES[Stage.STAGE_2]),
+    ]);
+    setLoadingStage(false);
+    setStage(Stage.STAGE_2);
+    delay(() => setAssertation(assertation));
   };
 
   useEffect(() => {
-    const loadCredentials = async () => {
-      setLoadingStage(true);
-      const [assertation] = await Promise.all([
-        loadNavigatorCredentials(),
-        waitPromise(STAGES[Stage.STAGE_2]),
-      ]);
-      setLoadingStage(false);
-      setStage(Stage.STAGE_2);
-      delay(() => setAssertation(assertation));
-    };
-    credential && loadCredentials();
-    return () => setCredential(undefined);
-  }, [credential]);
+    // const loadCredentials = async () => {
+    //   setLoadingStage(true);
+    //   const [assertation] = await Promise.all([
+    //     loadNavigatorCredentials(),
+    //     waitPromise(STAGES[Stage.STAGE_2]),
+    //   ]);
+    //   setLoadingStage(false);
+    //   setStage(Stage.STAGE_2);
+    //   delay(() => setAssertation(assertation));
+    // };
+    // credential && loadCredentials();
+    // return () => setCredential(undefined);
+    console.log("🪪 Credentials Stored", credentials);
+    // @TODO: Remove this to match new workflow.
+    setLoadingProcess(false);
+  }, [credentials]);
 
   useEffect(() => {
-    isAssertationValid != undefined && setStage(isAssertationValid ? Stage.STAGE_SUCCESS_ASSERTATION : Stage.STAGE_FAILED_ASSERTATION);
+    isAssertationValid != undefined &&
+      setStage(
+        isAssertationValid
+          ? Stage.STAGE_SUCCESS_ASSERTATION
+          : Stage.STAGE_FAILED_ASSERTATION
+      );
     setLoadingProcess(false);
     return () => setAssertation(undefined);
-  }, [isAssertationValid])
+  }, [isAssertationValid]);
 
   return (
     <Container height="100vh">
       <Hero />
       <Main>
-        <Button isLoading={isLoadingProcess} onClick={credentialsHandler}>
-          Start process.
-        </Button>
+        <Text color="text">
+          <Code>Webauthn</Code> stands for “Web Authentication”, a new standard
+          to create public key-based credentials for web applications.
+          <Code>zkECDSA</Code> is a TypeScript implementation of ZKAttest
+          zero-knowledge proofs of an ECDSA-P256 signature.
+        </Text>
+        <Text color="text">
+          Using both, anyone can register to a web service without disclosing
+          personal information, while generation proofs-of-access that can be
+          used to grant access to services or other offline workflows (e.g.
+          tickets for events).
+        </Text>
+        <Stack direction="row" spacing={4} align="center">
+          <Button
+            disabled={!!credentials.get(USER_1.email)}
+            isLoading={isLoadingProcess}
+            onClick={() => credentialsHandler(USER_1.email, USER_1.name)}
+          >
+            Register 🔑 (1)
+          </Button>
+          <Button
+            disabled={!!credentials.get(USER_2.email)}
+            isLoading={isLoadingProcess}
+            onClick={() => credentialsHandler(USER_2.email, USER_2.name)}
+          >
+            Register 🔑 (2)
+          </Button>
+          <Button
+            isLoading={isLoadingStage}
+            disabled={!credentials.get(USER_1.email)}
+            onClick={() => loadCredentialsHandler(credentials.get(USER_1.email))}
+          >
+            Proof 🧾 (1)
+          </Button>
+          <Button
+            isLoading={isLoadingStage}
+            disabled={!credentials.get(USER_2.email)}
+            onClick={() => loadCredentialsHandler(credentials.get(USER_2.email))}
+          >
+            Proof 🧾 (2)
+          </Button>
+        </Stack>
         <Text color="text">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
         </Text>
@@ -181,7 +272,13 @@ const Index = () => {
 
       <DarkModeSwitch />
       <Footer>
-        <Text>Built with ❤️ by 0xjjpa</Text>
+        <Text>
+          Built with ❤️ by 0xjjpa. Part of{" "}
+          <ChakraLink href="https://ceramic.network/" isExternal>
+            Ceramic Network
+          </ChakraLink>{" "}
+          Origin’s cohort.
+        </Text>
       </Footer>
     </Container>
   );
