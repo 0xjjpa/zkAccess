@@ -17,11 +17,12 @@ import { Container } from "../components/Container";
 import { Main } from "../components/Main";
 import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
 import { createZkAttestProofAndVerify, importPublicKey } from "../lib/zkecdsa";
 import { keyToInt } from "@cloudflare/zkp-ecdsa";
 import Jazzicon from "react-jazzicon";
+import Image from "next/image";
 
 const overloadOptions = (
   name: string,
@@ -33,20 +34,15 @@ const overloadOptions = (
   return options;
 };
 
-const USER_1 = {
-  email: "user-1@demo.com",
-  name: "Demo User 1",
-};
-
-const USER_2 = {
-  email: "user-2@demo.com",
-  name: "Demo User 2",
+const USER = {
+  email: "user@demo.com",
+  name: "Demo User",
 };
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
-    id: "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
+    id: process.env.VERCEL_URL ? process.env.VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
   },
   user: {
     id: new Uint8Array(16),
@@ -230,10 +226,10 @@ const Index = () => {
           zero-knowledge proofs of an ECDSA-P256 signature.
         </Text>
         <Text color="text">
-          Using both, you can register a public key to a web service. When prompted
-          for any sort of access, you can generate a zkAttest showcasing your
-          key is registered, allowing you to be granted access to services or
-          other offline workflows (e.g. tickets for events).
+          Using both, you can register a public key to a web service. When
+          prompted for any sort of access, you can generate a zkAttest
+          showcasing your key is registered, allowing you to be granted access
+          to services or other offline workflows (e.g. tickets for events).
         </Text>
         <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
           <SimpleGrid spacing={2} columns={2}>
@@ -243,7 +239,7 @@ const Index = () => {
               isLoading={isLoadingProcess}
               onClick={() => {
                 !credential
-                  ? credentialsHandler(USER_1.email, USER_1.name)
+                  ? credentialsHandler(USER.email, USER.name)
                   : setKeys([key].concat(EMPTY_KEYS));
               }}
             >
@@ -290,13 +286,32 @@ const Index = () => {
 
       <DarkModeSwitch />
       <Footer>
-        <Text>
-          Built with ❤️ by 0xjjpa. Part of{" "}
-          <ChakraLink href="https://ceramic.network/" isExternal>
-            Ceramic Network
-          </ChakraLink>{" "}
-          Origin’s cohort.
-        </Text>
+        <Flex direction="column">
+          <Flex justifyContent="center">
+            <Text>Built with ❤️ by </Text>
+            <ChakraLink href="https://twitter.com/0xjjpa" isExternal>
+              0xjjpa
+            </ChakraLink>
+            .
+          </Flex>
+          <Flex justifyContent="center">
+            <Text>Part of </Text>
+            <ChakraLink href="https://ceramic.network/" isExternal>
+              <Flex direction="row" mx="2">
+                <Image
+                  alt="Ceramic"
+                  width={24}
+                  height={18}
+                  src="/ceramic.png"
+                />
+                <Text fontWeight="900" ml="1">
+                  Ceramic
+                </Text>
+              </Flex>
+            </ChakraLink>{" "}
+            <Text>Origin cohort.</Text>
+          </Flex>
+        </Flex>
       </Footer>
     </Container>
   );
