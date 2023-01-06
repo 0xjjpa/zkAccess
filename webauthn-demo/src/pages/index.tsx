@@ -39,10 +39,12 @@ const USER = {
   name: "Demo User",
 };
 
+const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io"}`
+
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
-    id: process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io",
+    id: DOMAIN_ID,
   },
   user: {
     id: new Uint8Array(16),
@@ -138,6 +140,7 @@ const Index = () => {
     name: string
   ): Promise<PublicKeyCredential> => {
     console.log("🪪 Starting credential processs...");
+    console.log("🪪 Domain details", credentialCreationOptions.publicKey.rp.id);
     const credential = (await navigator.credentials.create(
       overloadOptions(name, email, credentialCreationOptions)
     )) as PublicKeyCredential;
