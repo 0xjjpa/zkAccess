@@ -23,6 +23,7 @@ import { createZkAttestProofAndVerify, importPublicKey } from "../lib/zkecdsa";
 import { keyToInt } from "@cloudflare/zkp-ecdsa";
 import Jazzicon from "react-jazzicon";
 import Image from "next/image";
+import { ConnectButton } from "../components/ConnectButton";
 
 const overloadOptions = (
   name: string,
@@ -39,7 +40,7 @@ const USER = {
   name: "Demo User",
 };
 
-const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-us81.gitpod.io"}`
+const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "3000-0xjjpa-zkaccess-raqbqlm92kg.ws-eu83.gitpod.io"}`
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
@@ -222,6 +223,7 @@ const Index = () => {
     <Container height="100vh">
       <Hero />
       <Main>
+        <ConnectButton />
         <Text color="text">
           <Code>Webauthn</Code> stands for “Web Authentication”, a new standard
           to create public key-based credentials for web applications.
