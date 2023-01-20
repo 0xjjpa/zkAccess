@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# CompositeDB branch local files
+composite-db/src/__generated__/**
+local.key
