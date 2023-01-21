@@ -2,16 +2,11 @@ import {
   Link as ChakraLink,
   Text,
   Code,
-  List,
-  ListIcon,
-  ListItem,
   Button,
-  Stack,
   SimpleGrid,
   Flex,
-  Box,
 } from "@chakra-ui/react";
-
+import { useAccount, useProvider } from 'wagmi'
 import { Hero } from "../components/Hero";
 import { Container } from "../components/Container";
 import { Main } from "../components/Main";
@@ -24,6 +19,8 @@ import { keyToInt } from "@cloudflare/zkp-ecdsa";
 import Jazzicon from "react-jazzicon";
 import Image from "next/image";
 import { ConnectButton } from "../components/ConnectButton";
+import { DIDSession } from 'did-session'
+import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 
 const overloadOptions = (
   name: string,
@@ -119,6 +116,57 @@ const Index = () => {
   const [key, setKey] = useState<bigint>();
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
+
+  const [session, setSession] = useState<DIDSession | null>(null);
+  const { address, connector } = useAccount();
+
+  const getStorageKey = (address: string) => `did-session:${address}`;
+
+  useEffect(() => {
+    const loadAccountId = async () => {
+      console.log("👤 Loading account Id...")
+      if (!address) return;
+      const sessionString = localStorage.getItem(getStorageKey(address));
+      if (sessionString) {
+        console.log("👤 Session found, loading from string...", sessionString);
+        const session = await DIDSession.fromSession(sessionString);
+        if (session && session.hasSession && !session.isExpired) {
+          setSession(session);
+          return;
+        }
+      }
+      console.log("👤 Session not found, connecting...");
+      await connect();
+    };
+    const connect = async () => {
+      if (!address || !connector) return;
+      const ethProvider = await connector.getProvider();
+  
+      const accountId = await getAccountId(ethProvider, address);
+      const authMethod = await EthereumWebAuth.getAuthMethod(
+        ethProvider,
+        accountId
+      );
+      console.log("👤 Connecting...", accountId);
+      const session = await DIDSession.authorize(authMethod, {
+        resources: [`ceramic://*`],
+        // 30 days sessions
+        expiresInSecs: 60 * 60 * 24 * 30,
+      });
+  
+      // Store the session in local storage
+      const sessionString = session.serialize();
+      console.log("👤 Session obtained, serializing", sessionString);
+      localStorage.setItem(getStorageKey(address), sessionString);
+  
+      setSession(session);
+    };
+    connector && address && loadAccountId();
+  }, [connector, address])
+
+  useEffect(() => {
+    console.log("🪪 Ceramic DID Session ready", session);
+  }, [session])
 
   const EMPTY_KEYS = [BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)];
   const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
