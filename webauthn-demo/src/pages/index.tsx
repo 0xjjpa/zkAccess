@@ -161,7 +161,7 @@ const Index = () => {
   
       setSession(session);
     };
-    connector && address && loadAccountId();
+    false && connector && address && loadAccountId(); // @TODO: Added to avoid retrigger...
   }, [connector, address])
 
   useEffect(() => {

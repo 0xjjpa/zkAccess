@@ -1,4 +1,4 @@
-import { keyToInt, generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList } from '@cloudflare/zkp-ecdsa'
+import { keyToInt, generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList, writeJson, Newable, readJson } from '@cloudflare/zkp-ecdsa'
 
 export type ZkAttestation = {
   params: SystemParametersList,
@@ -46,7 +46,13 @@ export const createZkAttestProofAndVerify = async(keys: bigint[], credential: Pu
   const listKeys = keys;
   console.log("📋 List of Keys", listKeys);
   const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);
-  const isValid = await verifyZkAttestProof(msgHash, listKeys, attestation);
+  //@TODO: Remove in production.
+  console.log("⏳ Roundtrip for testing parsing/exporting");
+  const jsonProof = writeJson(SignatureProofList, attestation.proof);
+  const jsonParams = writeJson(SystemParametersList, attestation.params);
+  const parsedProof = readJson(SignatureProofList, jsonProof);
+  const parsedParams = readJson(SystemParametersList, jsonParams);
+  const isValid = await verifyZkAttestProof(msgHash, listKeys, { params: parsedParams, proof: parsedProof });
   console.log("Is ZkProof Valid?", isValid);
   return isValid;
 }
