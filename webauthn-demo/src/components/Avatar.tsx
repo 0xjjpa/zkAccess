@@ -14,6 +14,6 @@ const ImageAvatarContainer = styled('div', {
 
 export const Avatar = ({ address }: { address: string }) => (
   <ImageAvatarContainer>
-    <img style={{ borderRadius: '50%' }} src={addressAvatar(address, 36)} alt="user avatar" />
+    <img src={addressAvatar(address, 36)} alt="user avatar" />
   </ImageAvatarContainer>
 )

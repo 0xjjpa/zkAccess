@@ -7,7 +7,7 @@ export const ConnectButton = () => {
     <div
       style={{
         display: "flex",
-        justifyContent: "flex-start",
+        justifyContent: "center",
       }}
     >
       <RainbowConnectButton.Custom>

@@ -2,5 +2,5 @@ export const addressAvatar = (address: string, size: number = 120) => {
     if (address.startsWith('0x')) {
       address = address.replace('0x', '');
     }
-    return `https://source.boringavatars.com/beam/${size}/${address}?square&colors=da3a00,fa8158,ffa835,37c391,7c456cf`;
+    return `https://source.boringavatars.com/beam/${size}/${address}?circle&colors=1B676B,519548,88C425,BEF202,EAFDE6`;
   };

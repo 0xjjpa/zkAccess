@@ -136,17 +136,9 @@ const Index = () => {
       <Hero />
       <Main>
         <ConnectButton />
-        <Text color="text">
-          <Code>Webauthn</Code> stands for “Web Authentication”, a new standard
-          to create public key-based credentials for web applications.
-          <Code>zkECDSA</Code> is a TypeScript implementation of ZKAttest
-          zero-knowledge proofs of an ECDSA-P256 signature.
-        </Text>
-        <Text color="text">
-          Using both, you can register a public key to a web service. When
-          prompted for any sort of access, you can generate a zkAttest
-          showcasing your key is registered, allowing you to be granted access
-          to services or other offline workflows (e.g. tickets for events).
+        <Text color="text" fontFamily="mono">
+          A zero-knowledge app to verify membership without
+          disclosing who is requesting access.
         </Text>
         <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
           <SimpleGrid spacing={2} columns={2}>
@@ -176,12 +168,17 @@ const Index = () => {
                 }`}
             </Button>
           </SimpleGrid>
-          <Flex justifyContent="space-between" alignItems="center">
-            <Code>Keys:</Code>
+          <Flex justifyContent="center" mt="5">
+            <Text color="text" fontFamily="mono">
+              Universe
+            </Text>
+          </Flex>
+
+          <Flex justifyContent="space-between" alignItems="center" my="2">
             {keyring.map((keyAsInt) => (
               <Flex
                 key={Number(keyAsInt)}
-                bg={key == keyAsInt ? "green.900" : "red.900"}
+                bg={key == keyAsInt ? "green.900" : "gray.600"} // @TODO: Make bg dynamic based on theme.
                 borderRadius="50%"
                 p="2"
                 onClick={() => {
@@ -203,8 +200,8 @@ const Index = () => {
       <DarkModeSwitch />
       <Footer>
         <Flex direction="column">
-          <Flex justifyContent="center">
-            <Text>Built with ❤️ by </Text>
+          <Flex justifyContent="center" fontFamily="mono">
+            <Text>Built with 🔒 by </Text>
             <ChakraLink href="https://twitter.com/0xjjpa" isExternal>
               0xjjpa
             </ChakraLink>
