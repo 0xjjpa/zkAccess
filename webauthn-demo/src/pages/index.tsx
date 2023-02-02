@@ -6,52 +6,38 @@ import {
   SimpleGrid,
   Flex,
 } from "@chakra-ui/react";
-import { useAccount, useProvider } from 'wagmi'
+import { useAccount } from 'wagmi'
+import { keyToInt } from "@cloudflare/zkp-ecdsa";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { DIDSession } from 'did-session'
+import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
+
 import { Hero } from "../components/Hero";
 import { Container } from "../components/Container";
 import { Main } from "../components/Main";
 import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
-import { useEffect, useState } from "react";
-import { verifyPublicKeyAndSignature } from "../lib/verification";
-import { createZkAttestProofAndVerify, importPublicKey } from "../lib/zkecdsa";
-import { keyToInt } from "@cloudflare/zkp-ecdsa";
-import Jazzicon from "react-jazzicon";
-import Image from "next/image";
+import { importPublicKey } from "../lib/zkecdsa";
 import { ConnectButton } from "../components/ConnectButton";
-import { DIDSession } from 'did-session'
-import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 import { Avatar } from "../components/Avatar";
-import { credentialCreationOptions, credentialRequestOptions, credentialRequestWithAllowedCredentialsInPublicKey, generateIdList, overloadOptions, USER } from "../lib/webauthn";
-
+import { createNavigatorCredentials, loadNavigatorCredentials } from "../lib/webauthn";
+import { LOADING_MESSAGE, Stage, STAGES } from "../constants/stages";
+import { waitPromise, delay } from "../helpers/promises";
+import { EMPTY_KEYS } from "../constants/zkecdsa";
+import { USER } from "../constants/webauthn";
 
 
 const Index = () => {
-  enum Stage {
-    STAGE_0 = "Register to create keys, and then create proofs with them.",
-    STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now to showcase access.",
-    STAGE_2 = "Loading the credential from the browser...",
-    STAGE_SUCCESS_ASSERTATION = "The zkECDSA proof created via Passkey was valid. Try removing your key (click on your Key) and do “Proof” again.",
-    STAGE_FAILED_ASSERTATION = "The zkECDSA proof created via Passkey is now invalid since your public key is gone from the keyring. If you add it again, it should work.",
-  }
-  const STAGES = {
-    [Stage.STAGE_1]: "CREDENTIAL_CREATION",
-    [Stage.STAGE_2]: "CREDENTIAL_RETRIEVAL",
-  };
-
-  const LOADING_MESSAGE = "Loading...";
-  const ONE_SECOND_IN_MS = 1000;
-  const THREE_SECONDS_IN_MS = ONE_SECOND_IN_MS * 3;
-  const MINIMAL_CALLBACK_TIME = THREE_SECONDS_IN_MS;
-
   const [isLoadingProcess, setLoadingProcess] = useState(false);
   const [isLoadingStage, setLoadingStage] = useState(false);
   const [credential, setCredential] = useState<PublicKeyCredential>();
   const [key, setKey] = useState<bigint>();
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
-
   const [session, setSession] = useState<DIDSession | null>(null);
+  const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
+
   const { address, connector } = useAccount();
 
   const getStorageKey = (address: string) => `did-session:${address}`;
@@ -75,7 +61,7 @@ const Index = () => {
     const connect = async () => {
       if (!address || !connector) return;
       const ethProvider = await connector.getProvider();
-  
+
       const accountId = await getAccountId(ethProvider, address);
       const authMethod = await EthereumWebAuth.getAuthMethod(
         ethProvider,
@@ -87,12 +73,12 @@ const Index = () => {
         // 30 days sessions
         expiresInSecs: 60 * 60 * 24 * 30,
       });
-  
+
       // Store the session in local storage
       const sessionString = session.serialize();
       console.log("👤 Session obtained, serializing", sessionString);
       localStorage.setItem(getStorageKey(address), sessionString);
-  
+
       setSession(session);
     };
     false && connector && address && loadAccountId(); // @TODO: Added to avoid retrigger...
@@ -101,62 +87,6 @@ const Index = () => {
   useEffect(() => {
     console.log("🪪 Ceramic DID Session ready", session);
   }, [session])
-
-  const EMPTY_KEYS = [BigInt(4), BigInt(5), BigInt(6), BigInt(7), BigInt(8)];
-  const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
-
-  const waitPromise = (stage = "Default stage") => {
-    console.log(`⏳ Starting stage ${stage}, waiting ${MINIMAL_CALLBACK_TIME}`);
-    return new Promise<void>((res) =>
-      setTimeout(() => {
-        console.log(`⏳ Completed stage: ${stage}`);
-        res();
-      }, MINIMAL_CALLBACK_TIME)
-    );
-  };
-
-  const delay = (cb: () => void) =>
-    setTimeout(() => cb(), MINIMAL_CALLBACK_TIME);
-
-  const createNavigatorCredentials = async (
-    email: string,
-    name: string
-  ): Promise<PublicKeyCredential> => {
-    console.log("🪪 Starting credential processs...");
-    console.log("🪪 Domain details", credentialCreationOptions.publicKey.rp.id);
-    const credential = (await navigator.credentials.create(
-      overloadOptions(name, email, credentialCreationOptions)
-    )) as PublicKeyCredential;
-    console.log("🪪 Finished credential processs...", credential);
-    return credential;
-  };
-
-  const loadNavigatorCredentials = async (credential: PublicKeyCredential) => {
-    console.log("📤 Loading existing credential processs...");
-    const enhancedCredentialRequestOptions =
-      credentialRequestWithAllowedCredentialsInPublicKey(
-        credentialRequestOptions,
-        generateIdList(credential.rawId)
-      );
-    const assertation = (await navigator.credentials.get(
-      enhancedCredentialRequestOptions
-    )) as PublicKeyCredential;
-    console.log("📤 Finished loading credential processs...", assertation);
-    const verification = await verifyPublicKeyAndSignature(
-      credential,
-      assertation
-    );
-    console.log("🔑 Verified?", verification.isValid);
-    const listKeys = keyring;
-    const isAssertationValid = await createZkAttestProofAndVerify(
-      listKeys,
-      credential,
-      verification.data,
-      verification.signature
-    );
-    console.log("⚫️ Verified?", isAssertationValid);
-    return isAssertationValid;
-  };
 
   const credentialsHandler = async (email: string, name: string) => {
     setLoadingProcess(true);
@@ -177,7 +107,7 @@ const Index = () => {
   const loadCredentialsHandler = async (credential: PublicKeyCredential) => {
     setLoadingStage(true);
     const [assertation] = await Promise.all([
-      loadNavigatorCredentials(credential),
+      loadNavigatorCredentials(credential, keyring),
       waitPromise(STAGES[Stage.STAGE_2]),
     ]);
     setLoadingStage(false);
@@ -238,13 +168,12 @@ const Index = () => {
               disabled={!credential}
               onClick={() => loadCredentialsHandler(credential)}
             >
-              {`Proof ${
-                isAssertationValid == undefined
-                  ? "🧾"
-                  : isAssertationValid
+              {`Proof ${isAssertationValid == undefined
+                ? "🧾"
+                : isAssertationValid
                   ? "✅"
                   : "❌"
-              }`}
+                }`}
             </Button>
           </SimpleGrid>
           <Flex justifyContent="space-between" alignItems="center">

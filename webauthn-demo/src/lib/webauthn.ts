@@ -1,4 +1,7 @@
-export const overloadOptions = (
+import { verifyPublicKeyAndSignature } from "./verification";
+import { createZkAttestProofAndVerify } from "./zkecdsa";
+
+const overloadOptions = (
   name: string,
   email: string,
   options: CredentialCreationOptions
@@ -8,16 +11,13 @@ export const overloadOptions = (
   return options;
 };
 
-export const USER = {
-  email: "user@demo.com",
-  name: "Demo User",
-};
-
 const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "http://localhost:3000"}`
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "Webauthn Demo",
+    // @TODO: Review whether this is needed at all on a client-based credential issuance.
+    // rp: DOMAIN_ID
   },
   user: {
     id: new Uint8Array(16),
@@ -41,15 +41,15 @@ const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
   ]).buffer,
 };
 
-export const credentialCreationOptions: CredentialCreationOptions = {
+const credentialCreationOptions: CredentialCreationOptions = {
   publicKey: publicKeyCredentialCreationOptions,
 };
 
-export const credentialRequestOptions: CredentialRequestOptions = {
+const credentialRequestOptions: CredentialRequestOptions = {
   publicKey: publicKeyCredentialRequestOptions,
 };
 
-export const generateIdList = (
+const generateIdList = (
   rawId: BufferSource
 ): PublicKeyCredentialDescriptor[] => [
     {
@@ -59,10 +59,50 @@ export const generateIdList = (
     },
   ];
 
-export const credentialRequestWithAllowedCredentialsInPublicKey = (
+const credentialRequestWithAllowedCredentialsInPublicKey = (
   credentialRequestOptions: CredentialRequestOptions,
   idList: PublicKeyCredentialDescriptor[]
 ) => {
   credentialRequestOptions.publicKey.allowCredentials = idList;
   return credentialRequestOptions;
+};
+
+export const createNavigatorCredentials = async (
+  email: string,
+  name: string
+): Promise<PublicKeyCredential> => {
+  console.log("🪪 Starting credential processs...");
+  console.log("🪪 Domain details", credentialCreationOptions.publicKey.rp.id);
+  const credential = (await navigator.credentials.create(
+    overloadOptions(name, email, credentialCreationOptions)
+  )) as PublicKeyCredential;
+  console.log("🪪 Finished credential processs...", credential);
+  return credential;
+};
+
+export const loadNavigatorCredentials = async (credential: PublicKeyCredential, keyring: bigint[]) => {
+  console.log("📤 Loading existing credential processs...");
+  const enhancedCredentialRequestOptions =
+    credentialRequestWithAllowedCredentialsInPublicKey(
+      credentialRequestOptions,
+      generateIdList(credential.rawId)
+    );
+  const assertation = (await navigator.credentials.get(
+    enhancedCredentialRequestOptions
+  )) as PublicKeyCredential;
+  console.log("📤 Finished loading credential processs...", assertation);
+  const verification = await verifyPublicKeyAndSignature(
+    credential,
+    assertation
+  );
+  console.log("🔑 Verified?", verification.isValid);
+  const listKeys = keyring;
+  const isAssertationValid = await createZkAttestProofAndVerify(
+    listKeys,
+    credential,
+    verification.data,
+    verification.signature
+  );
+  console.log("⚫️ Verified?", isAssertationValid);
+  return isAssertationValid;
 };
