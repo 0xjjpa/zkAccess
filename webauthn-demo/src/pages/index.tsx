@@ -9,7 +9,7 @@ import {
 import { useAccount } from 'wagmi'
 import { keyToInt } from "@cloudflare/zkp-ecdsa";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DIDSession } from 'did-session'
 import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 
@@ -40,25 +40,38 @@ const Index = () => {
 
   const { address, connector } = useAccount();
 
+  const hasWalletConnected = !!address;
+  const isCeramicConnected = !!session;
+
   const getStorageKey = (address: string) => `did-session:${address}`;
 
-  useEffect(() => {
-    const loadAccountId = async () => {
-      console.log("👤 Loading account Id...")
-      if (!address) return;
-      const sessionString = localStorage.getItem(getStorageKey(address));
-      if (sessionString) {
-        console.log("👤 Session found, loading from string...", sessionString);
-        const session = await DIDSession.fromSession(sessionString);
-        if (session && session.hasSession && !session.isExpired) {
-          setSession(session);
-          return;
-        }
+  const hasAccountDIDLoaded = async () => {
+    console.log("👤 Loading account Id...", address)
+    if (!address) return false;
+    const sessionString = localStorage.getItem(getStorageKey(address));
+    if (sessionString) {
+      console.log("👤 Session found, loading from string...", sessionString);
+      const session = await DIDSession.fromSession(sessionString);
+      if (session && session.hasSession && !session.isExpired) {
+        setSession(session);
+        return true;
       }
-      console.log("👤 Session not found, connecting...");
-      await connect();
-    };
+    } else {
+      console.log("👤 Session not found, try connecting");
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    connector && address && hasAccountDIDLoaded();
+    return () => setSession(null);
+  }, [connector, address])
+
+  const connectDID = useCallback(() => {
     const connect = async () => {
+      const isConnected = await hasAccountDIDLoaded();
+      if (isConnected) return;
+      console.log("⚡️ Connecting to Ceramic DID...")
       if (!address || !connector) return;
       const ethProvider = await connector.getProvider();
 
@@ -81,7 +94,7 @@ const Index = () => {
 
       setSession(session);
     };
-    false && connector && address && loadAccountId(); // @TODO: Added to avoid retrigger...
+    connector && address && connect();
   }, [connector, address])
 
   useEffect(() => {
@@ -141,20 +154,38 @@ const Index = () => {
           disclosing who is requesting access.
         </Text>
         <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
-          <SimpleGrid spacing={2} columns={2}>
-            <Button
-              size="sm"
-              disabled={!credential ? false : keyring[0] == key ? true : false}
-              isLoading={isLoadingProcess}
-              onClick={() => {
-                !credential
-                  ? credentialsHandler(USER.email, USER.name)
-                  : setKeys([key].concat(EMPTY_KEYS));
-              }}
-            >
-              {!credential ? "Register 🔑" : "Re-add key 🔑"}
-            </Button>
-            <Button
+          {hasWalletConnected && <SimpleGrid spacing={2} columns={1}>
+            {
+              isCeramicConnected ?
+                <Button
+                  size="sm"
+                  disabled={!credential ? false : keyring[0] == key ? true : false}
+                  isLoading={isLoadingProcess}
+                  onClick={() => {
+                    !credential
+                      ? credentialsHandler(USER.email, USER.name)
+                      : setKeys([key].concat(EMPTY_KEYS));
+                  }}
+                >
+                  {!credential ? "Register 🔑" : "Re-add key 🔑"}
+                </Button> :
+                <Button
+                  size="sm"
+                  onClick={() => connectDID()}
+                >
+                  <Text mr="2">Connect to</Text>
+                  <Image
+                    alt="Ceramic"
+                    width={18}
+                    height={12}
+                    src="/ceramic.png"
+                  />
+                  <Text fontWeight="900" ml="1">
+                    Ceramic
+                  </Text>
+                </Button>
+            }
+            {/* <Button
               size="sm"
               isLoading={isLoadingStage}
               disabled={!credential}
@@ -166,8 +197,8 @@ const Index = () => {
                   ? "✅"
                   : "❌"
                 }`}
-            </Button>
-          </SimpleGrid>
+            </Button> */}
+          </SimpleGrid>}
           <Flex justifyContent="center" mt="5">
             <Text color="text" fontFamily="mono">
               Universe
@@ -192,7 +223,7 @@ const Index = () => {
             ))}
           </Flex>
         </SimpleGrid>
-        <Text color="text">
+        <Text color="text" fontSize="sm">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
         </Text>
       </Main>
