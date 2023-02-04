@@ -1,3 +1,4 @@
+import { buf2hex, hex2buf } from "../helpers/buffers";
 import { verifyPublicKeyAndSignature } from "./verification";
 import { createZkAttestProofAndVerify } from "./zkecdsa";
 
@@ -82,10 +83,14 @@ export const createNavigatorCredentials = async (
 
 export const loadNavigatorCredentials = async (credential: PublicKeyCredential, keyring: bigint[]) => {
   console.log("📤 Loading existing credential processs...");
+  console.log("🪪 Raw Credential Id", credential.rawId);
+  console.log("🪪 Raw Credential Id (Hex)", buf2hex(credential.rawId));
+  console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");
+  const rawId = hex2buf(buf2hex(credential.rawId))
   const enhancedCredentialRequestOptions =
     credentialRequestWithAllowedCredentialsInPublicKey(
       credentialRequestOptions,
-      generateIdList(credential.rawId)
+      generateIdList(rawId)
     );
   const assertation = (await navigator.credentials.get(
     enhancedCredentialRequestOptions

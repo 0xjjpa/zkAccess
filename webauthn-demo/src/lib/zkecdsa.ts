@@ -1,4 +1,5 @@
 import { keyToInt, generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList, writeJson, Newable, readJson } from '@cloudflare/zkp-ecdsa'
+import { buf2hex, hex2buf } from '../helpers/buffers'
 
 export type ZkAttestation = {
   params: SystemParametersList,
@@ -7,9 +8,13 @@ export type ZkAttestation = {
 
 export const importPublicKey = async (credential: PublicKeyCredential): Promise<CryptoKey> => {
   const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey()
+  console.log('🔑 Public Key loaded from credential response', publicKey);
+  console.log('🔑 Public Key but as Hex', buf2hex(publicKey));
+  console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");
+  const pk = hex2buf(buf2hex(publicKey));
   const key = await crypto.subtle.importKey(
     "spki", // "spki" Simple Public Key Infrastructure rfc2692
-    publicKey,
+    pk,
     {
       name: "ECDSA",
       namedCurve: "P-256",

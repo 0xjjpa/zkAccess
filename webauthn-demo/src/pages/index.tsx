@@ -63,6 +63,10 @@ const Index = () => {
   };
 
   useEffect(() => {
+    console.log('🔑 Public Key Data', key);
+  }, [key]);
+
+  useEffect(() => {
     connector && address && hasAccountDIDLoaded();
     return () => setSession(null);
   }, [connector, address])
@@ -185,7 +189,7 @@ const Index = () => {
                   </Text>
                 </Button>
             }
-            {/* <Button
+            <Button
               size="sm"
               isLoading={isLoadingStage}
               disabled={!credential}
@@ -197,7 +201,7 @@ const Index = () => {
                   ? "✅"
                   : "❌"
                 }`}
-            </Button> */}
+            </Button>
           </SimpleGrid>}
           <Flex justifyContent="center" mt="5">
             <Text color="text" fontFamily="mono">
