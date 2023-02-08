@@ -1,23 +1,27 @@
 {
     "models": {
-        "Account": {
-            "id": "kjzl6hvfrbw6c65slei72r3eb68fuzrabkb4adxlvq6tihwn9sebfv4tzcxpw9c",
-            "accountRelation": {
-                "type": "single"
-            }
-        },
-        "Club": {
-            "id": "kjzl6hvfrbw6c8jlc4cpary5wbtf6a0vp8d0fu4vl0jbgyhzuumehmftqb3baea",
+        "Keyring": {
+            "id": "kjzl6hvfrbw6c5iikvw4ib1brpipz9lt8x588vh6pv5cli0qnwphuhisrw48opr",
             "accountRelation": {
                 "type": "list"
+            }
+        },
+        "Account": {
+            "id": "kjzl6hvfrbw6cb6o4q6fs5o3jo2s7x92s0j86chkbx1uqgnm9g0n5mdty0ypmfb",
+            "accountRelation": {
+                "type": "single"
             }
         }
     },
     "objects": {
-        "AccountPublicKey": {
-            "value": {
-                "type": "string",
-                "required": true
+        "Keyring": {
+            "keys": {
+                "type": "list",
+                "required": false,
+                "item": {
+                    "type": "string",
+                    "required": false
+                }
             }
         },
         "Account": {
@@ -26,44 +30,20 @@
                 "required": true
             },
             "publicKey": {
-                "type": "reference",
-                "refType": "object",
-                "refName": "AccountPublicKey",
-                "required": true
-            },
-            "owner": {
-                "type": "view",
-                "viewType": "documentAccount"
-            }
-        },
-        "ClubPublicKey": {
-            "value": {
                 "type": "string",
                 "required": true
-            }
-        },
-        "Club": {
-            "members": {
-                "type": "list",
-                "required": false,
-                "item": {
-                    "type": "reference",
-                    "refType": "object",
-                    "refName": "ClubPublicKey",
-                    "required": false
-                }
             }
         }
     },
     "enums": {},
     "accountData": {
+        "keyringList": {
+            "type": "connection",
+            "name": "Keyring"
+        },
         "account": {
             "type": "node",
             "name": "Account"
-        },
-        "clubList": {
-            "type": "connection",
-            "name": "Club"
         }
     }
 }
