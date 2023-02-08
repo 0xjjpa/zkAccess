@@ -6,10 +6,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ceramicnetwork/http-client": "^2.15.0",
     "@chakra-ui/icons": "^2.0.2",
     "@chakra-ui/react": "^2.2.1",
     "@chakra-ui/theme-tools": "^2.0.2",
     "@cloudflare/zkp-ecdsa": "^0.2.5",
+    "@composedb/client": "^0.3.1",
+    "@composedb/types": "^0.3.1",
     "@didtools/pkh-ethereum": "^0.0.3",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.9.0",

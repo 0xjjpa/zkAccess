@@ -83,6 +83,7 @@ export const createNavigatorCredentials = async (
 
 export const loadNavigatorCredentials = async (credential: PublicKeyCredential, keyring: bigint[]) => {
   console.log("📤 Loading existing credential processs...");
+  console.log('🔑 Keyring', keyring);
   console.log("🪪 Raw Credential Id", credential.rawId);
   console.log("🪪 Raw Credential Id (Hex)", buf2hex(credential.rawId));
   console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");

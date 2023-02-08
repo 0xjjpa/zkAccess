@@ -35,75 +35,15 @@ const Index = () => {
   const [key, setKey] = useState<bigint>();
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
-  const [session, setSession] = useState<DIDSession | null>(null);
   const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
 
-  const { address, connector } = useAccount();
+  const { address } = useAccount();
 
   const hasWalletConnected = !!address;
-  const isCeramicConnected = !!session;
-
-  const getStorageKey = (address: string) => `did-session:${address}`;
-
-  const hasAccountDIDLoaded = async () => {
-    console.log("👤 Loading account Id...", address)
-    if (!address) return false;
-    const sessionString = localStorage.getItem(getStorageKey(address));
-    if (sessionString) {
-      console.log("👤 Session found, loading from string...", sessionString);
-      const session = await DIDSession.fromSession(sessionString);
-      if (session && session.hasSession && !session.isExpired) {
-        setSession(session);
-        return true;
-      }
-    } else {
-      console.log("👤 Session not found, try connecting");
-      return false;
-    }
-  };
 
   useEffect(() => {
     console.log('🔑 Public Key Data', key);
   }, [key]);
-
-  useEffect(() => {
-    connector && address && hasAccountDIDLoaded();
-    return () => setSession(null);
-  }, [connector, address])
-
-  const connectDID = useCallback(() => {
-    const connect = async () => {
-      const isConnected = await hasAccountDIDLoaded();
-      if (isConnected) return;
-      console.log("⚡️ Connecting to Ceramic DID...")
-      if (!address || !connector) return;
-      const ethProvider = await connector.getProvider();
-
-      const accountId = await getAccountId(ethProvider, address);
-      const authMethod = await EthereumWebAuth.getAuthMethod(
-        ethProvider,
-        accountId
-      );
-      console.log("👤 Connecting...", accountId);
-      const session = await DIDSession.authorize(authMethod, {
-        resources: [`ceramic://*`],
-        // 30 days sessions
-        expiresInSecs: 60 * 60 * 24 * 30,
-      });
-
-      // Store the session in local storage
-      const sessionString = session.serialize();
-      console.log("👤 Session obtained, serializing", sessionString);
-      localStorage.setItem(getStorageKey(address), sessionString);
-
-      setSession(session);
-    };
-    connector && address && connect();
-  }, [connector, address])
-
-  useEffect(() => {
-    console.log("🪪 Ceramic DID Session ready", session);
-  }, [session])
 
   const credentialsHandler = async (email: string, name: string) => {
     setLoadingProcess(true);
@@ -159,36 +99,18 @@ const Index = () => {
         </Text>
         <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
           {hasWalletConnected && <SimpleGrid spacing={2} columns={1}>
-            {
-              isCeramicConnected ?
-                <Button
-                  size="sm"
-                  disabled={!credential ? false : keyring[0] == key ? true : false}
-                  isLoading={isLoadingProcess}
-                  onClick={() => {
-                    !credential
-                      ? credentialsHandler(USER.email, USER.name)
-                      : setKeys([key].concat(EMPTY_KEYS));
-                  }}
-                >
-                  {!credential ? "Register 🔑" : "Re-add key 🔑"}
-                </Button> :
-                <Button
-                  size="sm"
-                  onClick={() => connectDID()}
-                >
-                  <Text mr="2">Connect to</Text>
-                  <Image
-                    alt="Ceramic"
-                    width={18}
-                    height={12}
-                    src="/ceramic.png"
-                  />
-                  <Text fontWeight="900" ml="1">
-                    Ceramic
-                  </Text>
-                </Button>
-            }
+            <Button
+              size="sm"
+              disabled={!credential ? false : keyring[0] == key ? true : false}
+              isLoading={isLoadingProcess}
+              onClick={() => {
+                !credential
+                  ? credentialsHandler(USER.email, USER.name)
+                  : setKeys([key].concat(EMPTY_KEYS));
+              }}
+            >
+              {!credential ? "Register 🔑" : "Re-add key 🔑"}
+            </Button>
             <Button
               size="sm"
               isLoading={isLoadingStage}

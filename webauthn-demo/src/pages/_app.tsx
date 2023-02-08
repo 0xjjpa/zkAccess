@@ -16,6 +16,11 @@ import { configureChains, createClient, WagmiConfig } from "wagmi";
 import { mainnet, polygon, optimism, arbitrum, goerli } from "wagmi/chains";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
+import dynamic from "next/dynamic";
+
+const CeramicProvider = dynamic(
+  () => import('../context/ceramic')
+);
 
 const { chains, provider, webSocketProvider } = configureChains(
   [
@@ -64,7 +69,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     <ChakraProvider theme={theme}>
       <WagmiConfig client={wagmiClient}>
         <RainbowKitProvider appInfo={demoAppInfo} chains={chains}>
-          <Component {...pageProps} />
+          <CeramicProvider>
+            <Component {...pageProps} />
+          </CeramicProvider>
         </RainbowKitProvider>
       </WagmiConfig>
     </ChakraProvider>
