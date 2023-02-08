@@ -26,6 +26,9 @@ import { LOADING_MESSAGE, Stage, STAGES } from "../constants/stages";
 import { waitPromise, delay } from "../helpers/promises";
 import { EMPTY_KEYS } from "../constants/zkecdsa";
 import { USER } from "../constants/webauthn";
+import { composeClient } from "../lib/composeDB";
+import { useCeramic } from "../context/ceramic";
+import { buf2hex } from "../helpers/buffers";
 
 
 const Index = () => {
@@ -36,6 +39,8 @@ const Index = () => {
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
   const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
+  const { session } = useCeramic();
+  
 
   const { address } = useAccount();
 
@@ -45,6 +50,27 @@ const Index = () => {
     console.log('🔑 Public Key Data', key);
   }, [key]);
 
+  const updateAccount = async (rawId: string, publicKey: string) => {
+    if (session !== undefined) {
+      const update = await composeClient.executeQuery(`
+        mutation {
+          createAccount(input: {
+            content: {
+              rawId: "${rawId}"
+              publicKey: "${publicKey}"
+            }
+          }) 
+          {
+            document {
+              rawId
+              publicKey
+            }
+          }
+        }
+      `);
+    }
+  }
+
   const credentialsHandler = async (email: string, name: string) => {
     setLoadingProcess(true);
     setLoadingStage(true);
@@ -52,6 +78,8 @@ const Index = () => {
       createNavigatorCredentials(email, name),
       waitPromise(STAGES[Stage.STAGE_1]),
     ]);
+    const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey();
+    await updateAccount(buf2hex(credential.rawId), buf2hex(publicKey));
     setLoadingStage(false);
     setStage(Stage.STAGE_1);
     delay(async () => {
