@@ -16,14 +16,14 @@ const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
-    name: "Webauthn Demo",
+    name: "zkAccess",
     // @TODO: Review whether this is needed at all on a client-based credential issuance.
     // rp: DOMAIN_ID
   },
   user: {
     id: new Uint8Array(16),
-    name: "template@webauthn.demo",
-    displayName: "Template",
+    name: "zkAccess@ethereum.email",
+    displayName: "zkAccess",
   },
   challenge: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
   pubKeyCredParams: [{ type: "public-key", alg: -7 }],

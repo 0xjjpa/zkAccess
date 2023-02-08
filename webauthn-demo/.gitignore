@@ -36,4 +36,5 @@ yarn-error.log*
 next-env.d.ts
 
 # Generated Ceramic composites
-src/__generated__/**
+# @TODO: Properly generate these in CI/CD workflow instead of checking them in.
+# src/__generated__/**

@@ -1,0 +1,69 @@
+{
+    "models": {
+        "Account": {
+            "id": "kjzl6hvfrbw6c65slei72r3eb68fuzrabkb4adxlvq6tihwn9sebfv4tzcxpw9c",
+            "accountRelation": {
+                "type": "single"
+            }
+        },
+        "Club": {
+            "id": "kjzl6hvfrbw6c8jlc4cpary5wbtf6a0vp8d0fu4vl0jbgyhzuumehmftqb3baea",
+            "accountRelation": {
+                "type": "list"
+            }
+        }
+    },
+    "objects": {
+        "AccountPublicKey": {
+            "value": {
+                "type": "string",
+                "required": true
+            }
+        },
+        "Account": {
+            "rawId": {
+                "type": "string",
+                "required": true
+            },
+            "publicKey": {
+                "type": "reference",
+                "refType": "object",
+                "refName": "AccountPublicKey",
+                "required": true
+            },
+            "owner": {
+                "type": "view",
+                "viewType": "documentAccount"
+            }
+        },
+        "ClubPublicKey": {
+            "value": {
+                "type": "string",
+                "required": true
+            }
+        },
+        "Club": {
+            "members": {
+                "type": "list",
+                "required": false,
+                "item": {
+                    "type": "reference",
+                    "refType": "object",
+                    "refName": "ClubPublicKey",
+                    "required": false
+                }
+            }
+        }
+    },
+    "enums": {},
+    "accountData": {
+        "account": {
+            "type": "node",
+            "name": "Account"
+        },
+        "clubList": {
+            "type": "connection",
+            "name": "Club"
+        }
+    }
+}
