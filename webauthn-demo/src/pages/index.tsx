@@ -30,6 +30,8 @@ import { composeClient } from "../lib/composeDB";
 import { useCeramic } from "../context/ceramic";
 import { buf2hex } from "../helpers/buffers";
 import { UniverseKeyring } from "../components/UniverseKeyring";
+import { ClubButton } from "../components/ClubButton";
+import { ClubsContainer } from "../components/ClubsContainer";
 
 
 const Index = () => {
@@ -42,9 +44,9 @@ const Index = () => {
   const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
 
   const { session } = useCeramic();
-  const { address } = useAccount();
+  const { isConnected } = useAccount();
 
-  const hasWalletConnected = !!address;
+  const hasWalletConnected = isConnected;
 
   useEffect(() => {
     console.log('🔑 Public Key Data', key);
@@ -124,54 +126,64 @@ const Index = () => {
     <Container height="100vh">
       <Hero />
       <Main>
-        {/* <ConnectButton /> */}
+        <ConnectButton />
         <Text color="text" fontFamily="mono" textAlign="center">
           Create clubs and add people by scanning their IDs.
           Verify membership without disclosing your identity.
         </Text>
-        {hasWalletConnected && <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
-          {hasWalletConnected &&
+        {hasWalletConnected && <ClubsContainer
+          setup={
             <SimpleGrid spacing={2} columns={1}>
-              <Button
-                size="sm"
-                disabled={!credential ? false : keyring[0] == key ? true : false}
-                isLoading={isLoadingProcess}
-                onClick={() => {
-                  !credential
-                    ? credentialsHandler(USER.email, USER.name)
-                    : setKeys([key].concat(EMPTY_KEYS));
-                }}
-              >
-                {!credential ? "Register 🔑" : "View key 🔑"}
-              </Button>
-              <Button
-                size="sm"
-                isLoading={isLoadingStage}
-                disabled={!credential}
-                onClick={() => loadCredentialsHandler(credential)}
-              >
-                {`Access ${isAssertationValid == undefined
-                  ? "🧾"
-                  : isAssertationValid
-                    ? "✅"
-                    : "❌"
-                  }`}
-              </Button>
+              <ClubButton />
+              <Button size="sm" disabled>Load 📀</Button>
             </SimpleGrid>
           }
+          manage={
+            <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
+              {hasWalletConnected &&
+                <SimpleGrid spacing={2} columns={1}>
+                  <Button
+                    size="sm"
+                    disabled={!credential ? false : keyring[0] == key ? true : false}
+                    isLoading={isLoadingProcess}
+                    onClick={() => {
+                      !credential
+                        ? credentialsHandler(USER.email, USER.name)
+                        : setKeys([key].concat(EMPTY_KEYS));
+                    }}
+                  >
+                    {!credential ? "Register 🔑" : "View key 🔑"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    isLoading={isLoadingStage}
+                    disabled={!credential}
+                    onClick={() => loadCredentialsHandler(credential)}
+                  >
+                    {`Verify ${isAssertationValid == undefined
+                      ? "🧾"
+                      : isAssertationValid
+                        ? "✅"
+                        : "❌"
+                      }`}
+                  </Button>
+                </SimpleGrid>
+              }
 
-          {/* <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
+              {/* <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
             <Flex justifyContent="center" mt="5" flexDirection="column">
               <Text color="text" fontFamily="mono" textAlign="center">
-                Current Club
+                Members
               </Text>
               <Flex justifyContent="space-between" alignItems="center" my="2">
                 <UniverseKeyring myPublicKey={"hello"} />
               </Flex>
             </Flex>
           </SimpleGrid> */}
-        </SimpleGrid>
+            </SimpleGrid>
+          } />
         }
+
         <Text color="text" fontSize="sm">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
         </Text>
@@ -199,22 +211,22 @@ const Index = () => {
               .
             </Text>
           </Flex>
-          <Flex justifyContent="center" mt="5">
+          <Flex justifyContent="center" mt="2">
             <Text>Part of </Text>
-              <Flex direction="row" mx="2">
-                <Image
-                  alt="Ceramic"
-                  width={24}
-                  height={18}
-                  src="/ceramic.png"
-                />
-                <Text fontWeight="900" ml="1">
-                  <ChakraLink href="https://ceramic.network" isExternal>
-                    Ceramic
-                  </ChakraLink>
-                </Text>
-                ’s
-              </Flex>
+            <Flex direction="row" mx="2">
+              <Image
+                alt="Ceramic"
+                width={24}
+                height={18}
+                src="/ceramic.png"
+              />
+              <Text fontWeight="900" ml="1">
+                <ChakraLink href="https://ceramic.network" isExternal>
+                  Ceramic
+                </ChakraLink>
+              </Text>
+              ’s
+            </Flex>
             {" "}
             <Text>
               <ChakraLink href="https://blog.ceramic.network/introducing-ceramic-grants-origins-cohort/" isExternal>

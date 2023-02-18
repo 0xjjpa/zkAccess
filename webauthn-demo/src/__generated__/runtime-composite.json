@@ -1,29 +1,19 @@
 {
     "models": {
-        "Keyring": {
-            "id": "kjzl6hvfrbw6c5iikvw4ib1brpipz9lt8x588vh6pv5cli0qnwphuhisrw48opr",
-            "accountRelation": {
-                "type": "list"
-            }
-        },
         "Account": {
             "id": "kjzl6hvfrbw6cb6o4q6fs5o3jo2s7x92s0j86chkbx1uqgnm9g0n5mdty0ypmfb",
             "accountRelation": {
                 "type": "single"
             }
+        },
+        "Keyring": {
+            "id": "kjzl6hvfrbw6c9ri4hozxz4bdni7v9o61sxo5dps0mqpvj0gicr13h7md8ynb1s",
+            "accountRelation": {
+                "type": "list"
+            }
         }
     },
     "objects": {
-        "Keyring": {
-            "keys": {
-                "type": "list",
-                "required": false,
-                "item": {
-                    "type": "string",
-                    "required": false
-                }
-            }
-        },
         "Account": {
             "rawId": {
                 "type": "string",
@@ -33,17 +23,35 @@
                 "type": "string",
                 "required": true
             }
+        },
+        "Keyring": {
+            "keys": {
+                "type": "list",
+                "required": false,
+                "item": {
+                    "type": "string",
+                    "required": false
+                }
+            },
+            "title": {
+                "type": "string",
+                "required": true
+            },
+            "owner": {
+                "type": "view",
+                "viewType": "documentAccount"
+            }
         }
     },
     "enums": {},
     "accountData": {
-        "keyringList": {
-            "type": "connection",
-            "name": "Keyring"
-        },
         "account": {
             "type": "node",
             "name": "Account"
+        },
+        "keyringList": {
+            "type": "connection",
+            "name": "Keyring"
         }
     }
 }
