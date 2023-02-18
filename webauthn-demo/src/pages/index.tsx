@@ -29,6 +29,7 @@ import { USER } from "../constants/webauthn";
 import { composeClient } from "../lib/composeDB";
 import { useCeramic } from "../context/ceramic";
 import { buf2hex } from "../helpers/buffers";
+import { UniverseKeyring } from "../components/UniverseKeyring";
 
 
 const Index = () => {
@@ -39,9 +40,8 @@ const Index = () => {
   const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
   const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
-  const { session } = useCeramic();
-  
 
+  const { session } = useCeramic();
   const { address } = useAccount();
 
   const hasWalletConnected = !!address;
@@ -116,85 +116,91 @@ const Index = () => {
     setLoadingProcess(false);
   }, [isAssertationValid]);
 
+  useEffect(() => {
+    hasWalletConnected && setStage(Stage.STAGE_1);
+  }, [hasWalletConnected])
+
   return (
     <Container height="100vh">
       <Hero />
       <Main>
-        <ConnectButton />
-        <Text color="text" fontFamily="mono">
-          A zero-knowledge app to verify membership without
-          disclosing who is requesting access.
+        {/* <ConnectButton /> */}
+        <Text color="text" fontFamily="mono" textAlign="center">
+          Create clubs and add people by scanning their IDs.
+          Verify membership without disclosing your identity.
         </Text>
-        <SimpleGrid spacing={2} columns={[1, 1, 2, 2]}>
-          {hasWalletConnected && <SimpleGrid spacing={2} columns={1}>
-            <Button
-              size="sm"
-              disabled={!credential ? false : keyring[0] == key ? true : false}
-              isLoading={isLoadingProcess}
-              onClick={() => {
-                !credential
-                  ? credentialsHandler(USER.email, USER.name)
-                  : setKeys([key].concat(EMPTY_KEYS));
-              }}
-            >
-              {!credential ? "Register 🔑" : "Re-add key 🔑"}
-            </Button>
-            <Button
-              size="sm"
-              isLoading={isLoadingStage}
-              disabled={!credential}
-              onClick={() => loadCredentialsHandler(credential)}
-            >
-              {`Proof ${isAssertationValid == undefined
-                ? "🧾"
-                : isAssertationValid
-                  ? "✅"
-                  : "❌"
-                }`}
-            </Button>
-          </SimpleGrid>}
-          <Flex justifyContent="center" mt="5">
-            <Text color="text" fontFamily="mono">
-              Universe
-            </Text>
-          </Flex>
-
-          <Flex justifyContent="space-between" alignItems="center" my="2">
-            {keyring.map((keyAsInt) => (
-              <Flex
-                key={Number(keyAsInt)}
-                bg={key == keyAsInt ? "green.900" : "gray.600"} // @TODO: Make bg dynamic based on theme.
-                borderRadius="50%"
-                p="2"
+        {hasWalletConnected && <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
+          {hasWalletConnected &&
+            <SimpleGrid spacing={2} columns={1}>
+              <Button
+                size="sm"
+                disabled={!credential ? false : keyring[0] == key ? true : false}
+                isLoading={isLoadingProcess}
                 onClick={() => {
-                  if (key == keyAsInt) {
-                    setKeys(keyring.filter((key) => key != keyAsInt));
-                  }
+                  !credential
+                    ? credentialsHandler(USER.email, USER.name)
+                    : setKeys([key].concat(EMPTY_KEYS));
                 }}
               >
-                <Avatar address={`${Number(keyAsInt)}`} />
+                {!credential ? "Register 🔑" : "View key 🔑"}
+              </Button>
+              <Button
+                size="sm"
+                isLoading={isLoadingStage}
+                disabled={!credential}
+                onClick={() => loadCredentialsHandler(credential)}
+              >
+                {`Access ${isAssertationValid == undefined
+                  ? "🧾"
+                  : isAssertationValid
+                    ? "✅"
+                    : "❌"
+                  }`}
+              </Button>
+            </SimpleGrid>
+          }
+
+          {/* <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
+            <Flex justifyContent="center" mt="5" flexDirection="column">
+              <Text color="text" fontFamily="mono" textAlign="center">
+                Current Club
+              </Text>
+              <Flex justifyContent="space-between" alignItems="center" my="2">
+                <UniverseKeyring myPublicKey={"hello"} />
               </Flex>
-            ))}
-          </Flex>
+            </Flex>
+          </SimpleGrid> */}
         </SimpleGrid>
+        }
         <Text color="text" fontSize="sm">
           {isLoadingStage ? LOADING_MESSAGE : currentStage}
         </Text>
       </Main>
 
       <DarkModeSwitch />
-      <Footer>
+      <Footer mt="10">
         <Flex direction="column">
-          <Flex justifyContent="center" fontFamily="mono">
-            <Text>Built with 🔒 by </Text>
-            <ChakraLink href="https://twitter.com/0xjjpa" isExternal>
-              0xjjpa
-            </ChakraLink>
-            .
+          <Flex justifyContent="center" fontFamily="mono" fontSize="xs">
+            <Text mr="2">
+              <ChakraLink href="https://github.com/0xjjpa/zkAccess" isExternal>
+                Open source
+              </ChakraLink>. Built with <ChakraLink href="https://github.com/cloudflare/zkp-ecdsa" isExternal>
+                zkp-ecdsa
+              </ChakraLink>
+              .
+            </Text>
           </Flex>
-          <Flex justifyContent="center">
+          <Flex justifyContent="center" fontFamily="mono" fontSize="xs">
+            <Text mr="2">
+              Crafted by{' '}
+              <ChakraLink href="https://twitter.com/0xjjpa" isExternal>
+                0xjjpa
+              </ChakraLink>
+              .
+            </Text>
+          </Flex>
+          <Flex justifyContent="center" mt="5">
             <Text>Part of </Text>
-            <ChakraLink href="https://ceramic.network/" isExternal>
               <Flex direction="row" mx="2">
                 <Image
                   alt="Ceramic"
@@ -203,11 +209,18 @@ const Index = () => {
                   src="/ceramic.png"
                 />
                 <Text fontWeight="900" ml="1">
-                  Ceramic
+                  <ChakraLink href="https://ceramic.network" isExternal>
+                    Ceramic
+                  </ChakraLink>
                 </Text>
+                ’s
               </Flex>
-            </ChakraLink>{" "}
-            <Text>Origin cohort.</Text>
+            {" "}
+            <Text>
+              <ChakraLink href="https://blog.ceramic.network/introducing-ceramic-grants-origins-cohort/" isExternal>
+                origin cohort
+              </ChakraLink>.
+            </Text>
           </Flex>
         </Flex>
       </Footer>

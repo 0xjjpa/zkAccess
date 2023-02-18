@@ -1,5 +1,5 @@
 export enum Stage {
-  STAGE_0 = "Register to create keys, and then create proofs with them.",
+  STAGE_0 = "Connect your web3 wallets to add your identity to any club or create one yourself.",
   STAGE_1 = "Created keypair using secure navigator API. You can create a zkECDSA proof now to showcase access.",
   STAGE_2 = "Loading the credential from the browser...",
   STAGE_SUCCESS_ASSERTATION = "The zkECDSA proof created via Passkey was valid. Try removing your key (click on your Key) and do “Proof” again.",
