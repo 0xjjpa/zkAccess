@@ -7,117 +7,47 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { useAccount } from 'wagmi'
-import { keyToInt } from "@cloudflare/zkp-ecdsa";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
-import { DIDSession } from 'did-session'
-import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
+import { useEffect, useState } from "react";
 
 import { Hero } from "../components/Hero";
 import { Container } from "../components/Container";
 import { Main } from "../components/Main";
 import { DarkModeSwitch } from "../components/DarkModeSwitch";
 import { Footer } from "../components/Footer";
-import { importPublicKey } from "../lib/zkecdsa";
 import { ConnectButton } from "../components/ConnectButton";
 import { Avatar } from "../components/Avatar";
-import { createNavigatorCredentials, loadNavigatorCredentials } from "../lib/webauthn";
-import { LOADING_MESSAGE, Stage, STAGES } from "../constants/stages";
-import { waitPromise, delay } from "../helpers/promises";
+import { LOADING_MESSAGE, Stage } from "../constants/stages";
 import { EMPTY_KEYS } from "../constants/zkecdsa";
-import { USER } from "../constants/webauthn";
-import { composeClient } from "../lib/composeDB";
 import { useCeramic } from "../context/ceramic";
-import { buf2hex } from "../helpers/buffers";
 import { UniverseKeyring } from "../components/UniverseKeyring";
 import { ClubButton } from "../components/ClubButton";
 import { ClubsContainer } from "../components/ClubsContainer";
 import { RegisterButton } from "../components/RegisterButton";
+import { SelfRegisterButton } from "../components/SelfRegisterButton";
 
 
 const Index = () => {
-  const [isLoadingProcess, setLoadingProcess] = useState(false);
+  // @TODO: Identify if this is still needed.
+  // const [isLoadingProcess, setLoadingProcess] = useState(false);
+  // const [isAssertationValid, setAssertation] = useState<boolean>();
   const [isLoadingStage, setLoadingStage] = useState(false);
-  const [credential, setCredential] = useState<PublicKeyCredential>();
-  const [key, setKey] = useState<bigint>();
-  const [isAssertationValid, setAssertation] = useState<boolean>();
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
-  const [keyring, setKeys] = useState<bigint[]>(EMPTY_KEYS);
 
-  const { session } = useCeramic();
   const { isConnected } = useAccount();
 
   const hasWalletConnected = isConnected;
 
-  useEffect(() => {
-    console.log('🔑 Public Key Data', key);
-  }, [key]);
-
-  const updateAccount = async (rawId: string, publicKey: string) => {
-    if (session !== undefined) {
-      const update = await composeClient.executeQuery(`
-        mutation {
-          createAccount(input: {
-            content: {
-              rawId: "${rawId}"
-              publicKey: "${publicKey}"
-            }
-          }) 
-          {
-            document {
-              rawId
-              publicKey
-            }
-          }
-        }
-      `);
-    }
-  }
-
-  const credentialsHandler = async (email: string, name: string) => {
-    setLoadingProcess(true);
-    setLoadingStage(true);
-    const [credential] = await Promise.all([
-      createNavigatorCredentials(email, name),
-      waitPromise(STAGES[Stage.STAGE_1]),
-    ]);
-    const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey();
-    await updateAccount(buf2hex(credential.rawId), buf2hex(publicKey));
-    setLoadingStage(false);
-    setStage(Stage.STAGE_1);
-    delay(async () => {
-      const key = await importPublicKey(credential);
-      setKey(await keyToInt(key));
-      setCredential(credential);
-    });
-  };
-
-  const loadCredentialsHandler = async (credential: PublicKeyCredential) => {
-    setLoadingStage(true);
-    const [assertation] = await Promise.all([
-      loadNavigatorCredentials(credential, keyring),
-      waitPromise(STAGES[Stage.STAGE_2]),
-    ]);
-    setLoadingStage(false);
-    setStage(Stage.STAGE_2);
-    delay(() => setAssertation(assertation));
-  };
-
-  useEffect(() => {
-    console.log("🪪 Credential Stored", credential);
-    setLoadingProcess(false);
-    credential && key && setKeys([key].concat(EMPTY_KEYS));
-  }, [credential, key]);
-
-  useEffect(() => {
-    isAssertationValid != undefined &&
-      setStage(
-        isAssertationValid
-          ? Stage.STAGE_SUCCESS_ASSERTATION
-          : Stage.STAGE_FAILED_ASSERTATION
-      );
-    setLoadingProcess(false);
-  }, [isAssertationValid]);
+  // @TODO: Identify whether this is still needed.
+  // useEffect(() => {
+  //   isAssertationValid != undefined &&
+  //     setStage(
+  //       isAssertationValid
+  //         ? Stage.STAGE_SUCCESS_ASSERTATION
+  //         : Stage.STAGE_FAILED_ASSERTATION
+  //     );
+  //   setLoadingProcess(false);
+  // }, [isAssertationValid]);
 
   useEffect(() => {
     hasWalletConnected && setStage(Stage.STAGE_1);
@@ -144,32 +74,8 @@ const Index = () => {
             <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
               {hasWalletConnected &&
                 <SimpleGrid spacing={2} columns={1}>
-                  <Button
-                    size="sm"
-                    disabled={!credential ? false : keyring[0] == key ? true : false}
-                    isLoading={isLoadingProcess}
-                    onClick={() => {
-                      !credential
-                        ? credentialsHandler(USER.email, USER.name)
-                        : setKeys([key].concat(EMPTY_KEYS));
-                    }}
-                  >
-                    {!credential ? "Self-register 👤" : "View key 👤"}
-                  </Button>
+                  <SelfRegisterButton />
                   <RegisterButton />
-                  <Button
-                    size="sm"
-                    isLoading={isLoadingStage}
-                    disabled={!credential}
-                    onClick={() => loadCredentialsHandler(credential)}
-                  >
-                    {`Verify ${isAssertationValid == undefined
-                      ? "🧾"
-                      : isAssertationValid
-                        ? "✅"
-                        : "❌"
-                      }`}
-                  </Button>
                 </SimpleGrid>
               }
 

@@ -1,7 +1,7 @@
 {
     "models": {
         "Account": {
-            "id": "kjzl6hvfrbw6cb6o4q6fs5o3jo2s7x92s0j86chkbx1uqgnm9g0n5mdty0ypmfb",
+            "id": "kjzl6hvfrbw6c9wdceb192evnzyk2jgpeef6t8g5cazuqlo2vr78x8984v53su8",
             "accountRelation": {
                 "type": "single"
             }
@@ -19,9 +19,9 @@
                 "type": "string",
                 "required": true
             },
-            "publicKey": {
-                "type": "string",
-                "required": true
+            "owner": {
+                "type": "view",
+                "viewType": "documentAccount"
             }
         },
         "Keyring": {

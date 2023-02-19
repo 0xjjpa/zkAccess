@@ -12,13 +12,12 @@ const overloadOptions = (
   return options;
 };
 
-const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "http://localhost:3000"}`
+const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL : process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : "localhost"}`
 
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "zkAccess",
-    // @TODO: Review whether this is needed at all on a client-based credential issuance.
-    // rp: DOMAIN_ID
+    id: DOMAIN_ID
   },
   user: {
     id: new Uint8Array(16),
@@ -46,11 +45,11 @@ const credentialCreationOptions: CredentialCreationOptions = {
   publicKey: publicKeyCredentialCreationOptions,
 };
 
-const credentialRequestOptions: CredentialRequestOptions = {
+export const credentialRequestOptions: CredentialRequestOptions = {
   publicKey: publicKeyCredentialRequestOptions,
 };
 
-const generateIdList = (
+export const generateIdList = (
   rawId: BufferSource
 ): PublicKeyCredentialDescriptor[] => [
     {
@@ -60,7 +59,7 @@ const generateIdList = (
     },
   ];
 
-const credentialRequestWithAllowedCredentialsInPublicKey = (
+export const credentialRequestWithAllowedCredentialsInPublicKey = (
   credentialRequestOptions: CredentialRequestOptions,
   idList: PublicKeyCredentialDescriptor[]
 ) => {

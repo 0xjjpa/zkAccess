@@ -22,6 +22,14 @@ export type ClubResponse = {
   }
 }
 
+export type AccountResponse = {
+  node: {
+    account: {
+      rawId: string
+    }
+  }
+}
+
 export type CreateClubResponse = {
   createKeyring: {
     document: ClubProperties
@@ -29,11 +37,71 @@ export type CreateClubResponse = {
 }
 
 export type UpdateClubResponse = {
-   updateKeyring: {
+  updateKeyring: {
     document: {
       keys: string[]
     }
-   }
+  }
+}
+
+export type CreateAccountRespons = {
+  createAccount: {
+    document: {
+      rawId: string;
+    }
+  }
+}
+
+export const loadAccount = async(session: DIDSession) => {
+  try {
+    const did = session.did
+    const query = `
+      query {
+        node(id: "${did.parent}") {
+          ...on CeramicAccount {
+            account {
+              rawId
+            }
+          }
+        }
+      }
+    `
+    console.log("🔑 Loading account with following DID", did.parent);
+    const { data, errors } = await composeClient.executeQuery<AccountResponse>(query);
+    if (errors) {
+      console.error('[ SDK - loadAccount ] Error while loading account', errors);
+    }
+    return data;
+  } catch (e) {
+    console.error('[ SDK - loadAccount ] Error while loading account', e);
+  }
+}
+
+export const createAccount = async (rawId: string) => {
+  try {
+    const query = `
+      mutation {
+        createAccount(input: {
+          content: {
+            rawId: "${rawId}"
+          }
+        }) 
+        {
+          document {
+            rawId
+          }
+        }
+      }
+    `
+    console.log("🔑 Creating account with following data", rawId);
+    const { data, errors } = await composeClient.executeQuery<CreateAccountRespons>(query);
+    if (errors) {
+      console.error('[ SDK - createAccount ] Error while creating account', errors);
+    }
+    return data;
+  } catch (e) {
+    console.log('[ SDK - createAccount ] Error while creating account', e);
+  }
 }
 
 export const updateClubs = async (streamId: string, keys: string[], key: string) => {
