@@ -54,7 +54,6 @@ export const generateIdList = (
 ): PublicKeyCredentialDescriptor[] => [
     {
       id: rawId,
-      transports: ["usb", "nfc", "ble"],
       type: "public-key",
     },
   ];
