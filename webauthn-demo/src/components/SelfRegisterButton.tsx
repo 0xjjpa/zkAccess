@@ -11,29 +11,40 @@ import { createNavigatorCredentials, credentialRequestOptions, credentialRequest
 
 export const SelfRegisterButton = () => {
   const [isLoading, setLoading] = useState(false);
+  const [rawId, setRawId] = useState<ArrayBuffer>();
   const [credential, setCredential] = useState<PublicKeyCredential>();
   const [publicKeyAsHex, setPublicKeyAsHex] = useState<string>();
 
   const { keys: existingKeys } = useClub();
   const { session } = useCeramic();
 
-  // @TODO: Properly test this... perhaps does make sense to do on useEffect
-  const setupCredential = async() => {
+  const loadRawId = async () => {
+    console.log('🪪 Loading credentials from user...', session.did.parent)
     const accountResponse = await loadAccount(session);
     if (accountResponse?.node?.account?.rawId) {
       const rawId = hex2buf(accountResponse?.node?.account?.rawId);
-      const enhancedCredentialRequestOptions =
-        credentialRequestWithAllowedCredentialsInPublicKey(
-          credentialRequestOptions,
-          generateIdList(rawId)
-        );
-      const assertation = (await navigator.credentials.get(
-          enhancedCredentialRequestOptions
-      )) as PublicKeyCredential;
+      console.log('🪪 Credential found!', rawId)
+      setRawId(rawId);
     }
   }
 
-  const credentialsHandler = async (email: string, name: string) => {
+  const loadCredentialsHandler = async() => {   
+    const enhancedCredentialRequestOptions =
+      credentialRequestWithAllowedCredentialsInPublicKey(
+        credentialRequestOptions,
+        generateIdList(rawId)
+      );
+    const assertation = (await navigator.credentials.get(
+        enhancedCredentialRequestOptions
+    )) as PublicKeyCredential;
+    setCredential(assertation);
+  }
+
+  useEffect(() => {
+    session && loadRawId();
+  }, [session])
+
+  const createCredentialsHandler = async (email: string, name: string) => {
     console.log('🪪 Creating account for', session.did.parent);
     setLoading(true);
     const [credential] = await Promise.all([
@@ -61,15 +72,14 @@ export const SelfRegisterButton = () => {
   return (
     <Button
       size="sm"
-      disabled={!credential ? false : existingKeys[0] == publicKeyAsHex ? true : false}
       isLoading={isLoading}
       onClick={() => {
-        !credential
-          ? credentialsHandler(USER.email, USER.name) // Create new account, and add it.
-          : setupCredential() // @TODO: Remove from array (not really possible so...)
+        !rawId
+          ? createCredentialsHandler(USER.email, USER.name) // Create new account.
+          : loadCredentialsHandler() // @TODO: Remove from array (not really possible so...)
       }}
     >
-      {!credential ? "Load Account 👤" : "Create Account 👤"}
+      {!rawId ? "Create Account 👤" : !credential ? "Load Account 👤" : "Add Key 🔑"}
     </Button>
   )
 }

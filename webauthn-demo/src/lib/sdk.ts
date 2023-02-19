@@ -68,6 +68,7 @@ export const loadAccount = async(session: DIDSession) => {
     `
     console.log("🔑 Loading account with following DID", did.parent);
     const { data, errors } = await composeClient.executeQuery<AccountResponse>(query);
+    console.log("DATA", data);
     if (errors) {
       console.error('[ SDK - loadAccount ] Error while loading account', errors);
     }
