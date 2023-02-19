@@ -1,20 +1,65 @@
 import { DIDSession } from "did-session";
 import { composeClient } from "../lib/composeDB";
 
-export type Club = {
-  node: {
+export type ClubProperties = {
+  id: string;
     owner: {
-      id: string
+      id: string;
     }
+    keys: string[];
     title: string;
-  }
 }
 
-type ClubResponse = {
+export type Club = {
+  node: ClubProperties;
+}
+
+export type ClubResponse = {
   node: {
     keyringList: {
       edges: Club[]
     }
+  }
+}
+
+export type CreateClubResponse = {
+  createKeyring: {
+    document: ClubProperties
+  }
+}
+
+export type UpdateClubResponse = {
+   updateKeyring: {
+    document: {
+      keys: string[]
+    }
+   }
+}
+
+export const updateClubs = async (streamId: string, keys: string[], key: string) => {
+  try {
+    const query = `
+    mutation {
+      updateKeyring(input: {
+        id: "${streamId}",
+        content: {
+          keys: ${JSON.stringify(keys.concat(key))}
+        }
+      }) {
+        document {
+          keys
+        }
+      }
+    }
+    `
+    console.log("📄 Querying for document with streamId", streamId);
+    const { data, errors } = await composeClient.executeQuery<UpdateClubResponse>(query);
+    if (errors) {
+      console.error('[ SDK - updateClubs ] Error while updating clubs', errors);
+    }
+    return data;
+  } catch (e) {
+    console.error('[ SDK - updateClubs ] Errors while updating clubs', e);
   }
 }
 
@@ -28,9 +73,11 @@ export const loadClubs = async (session: DIDSession): Promise<Club[]> => {
           keyringList(first: 5) {
             edges {
               node {
+                id
                 owner {
                   id
                 }
+                keys
                 title
               }
             } 
@@ -52,7 +99,7 @@ export const loadClubs = async (session: DIDSession): Promise<Club[]> => {
 
 export const createClub = async (title: string) => {
   try {
-    const { errors } = await composeClient.executeQuery(
+    const { data, errors } = await composeClient.executeQuery<CreateClubResponse>(
       `
         mutation {
           createKeyring(input: {
@@ -63,16 +110,22 @@ export const createClub = async (title: string) => {
           }) 
           {
             document {
+              owner {
+                id
+              }
               title
               keys
+              id
             }
           }
         }
       `
     );
+    console.log("🫂 Creating club with title", title, data);
     if (errors) {
       console.error('[ SDK - createClub ] Error while creating club', errors);
     }
+    return data;
   } catch (e) {
     console.error('[ SDK - createClub ] Error while creating club', e);
   }

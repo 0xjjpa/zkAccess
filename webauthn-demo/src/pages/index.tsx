@@ -32,6 +32,7 @@ import { buf2hex } from "../helpers/buffers";
 import { UniverseKeyring } from "../components/UniverseKeyring";
 import { ClubButton } from "../components/ClubButton";
 import { ClubsContainer } from "../components/ClubsContainer";
+import { RegisterButton } from "../components/RegisterButton";
 
 
 const Index = () => {
@@ -132,10 +133,11 @@ const Index = () => {
           Verify membership without disclosing your identity.
         </Text>
         {hasWalletConnected && <ClubsContainer
+          setStage={setStage}
           setup={
             <SimpleGrid spacing={2} columns={1}>
               <ClubButton />
-              <Button size="sm" disabled>Load 📀</Button>
+              <Button size="sm" disabled>Load (WIP)📀</Button>
             </SimpleGrid>
           }
           manage={
@@ -152,8 +154,9 @@ const Index = () => {
                         : setKeys([key].concat(EMPTY_KEYS));
                     }}
                   >
-                    {!credential ? "Register 🔑" : "View key 🔑"}
+                    {!credential ? "Self-register 👤" : "View key 👤"}
                   </Button>
+                  <RegisterButton />
                   <Button
                     size="sm"
                     isLoading={isLoadingStage}
