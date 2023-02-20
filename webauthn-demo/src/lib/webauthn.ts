@@ -79,13 +79,13 @@ export const createNavigatorCredentials = async (
   return credential;
 };
 
-export const loadNavigatorCredentials = async (credential: PublicKeyCredential, keyring: bigint[]) => {
+export const loadNavigatorCredentials = async (rawId: ArrayBuffer, publicKey: ArrayBuffer, keyring: bigint[]) => {
   console.log("📤 Loading existing credential processs...");
   console.log('🔑 Keyring', keyring);
-  console.log("🪪 Raw Credential Id", credential.rawId);
-  console.log("🪪 Raw Credential Id (Hex)", buf2hex(credential.rawId));
+  console.log("🪪 Raw Credential Id", rawId);
+  console.log("🪪 Raw Credential Id (Hex)", buf2hex(rawId));
   console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");
-  const rawId = hex2buf(buf2hex(credential.rawId))
+
   const enhancedCredentialRequestOptions =
     credentialRequestWithAllowedCredentialsInPublicKey(
       credentialRequestOptions,
@@ -96,14 +96,14 @@ export const loadNavigatorCredentials = async (credential: PublicKeyCredential, 
   )) as PublicKeyCredential;
   console.log("📤 Finished loading credential processs...", assertation);
   const verification = await verifyPublicKeyAndSignature(
-    credential,
+    publicKey,
     assertation
   );
   console.log("🔑 Verified?", verification.isValid);
   const listKeys = keyring;
   const isAssertationValid = await createZkAttestProofAndVerify(
     listKeys,
-    credential,
+    publicKey,
     verification.data,
     verification.signature
   );

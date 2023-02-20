@@ -1,7 +1,7 @@
 {
     "models": {
         "Account": {
-            "id": "kjzl6hvfrbw6c9wdceb192evnzyk2jgpeef6t8g5cazuqlo2vr78x8984v53su8",
+            "id": "kjzl6hvfrbw6c9p2akops9y0q83oa8if0vk4uj7vbbogzisfsd729fnkm8m8ywp",
             "accountRelation": {
                 "type": "single"
             }
@@ -16,6 +16,10 @@
     "objects": {
         "Account": {
             "rawId": {
+                "type": "string",
+                "required": true
+            },
+            "publicKey": {
                 "type": "string",
                 "required": true
             },

@@ -30,7 +30,6 @@ export const UniverseKeyring = ({ myPublicKey }: { myPublicKey: string }) => {
             edges {
               node {
                 rawId
-                publicKey
               }
             }
           }

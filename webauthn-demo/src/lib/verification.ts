@@ -4,9 +4,8 @@ export type Verification = {
   data: Uint8Array
 }
 
-export const verifyPublicKeyAndSignature = async (credential: PublicKeyCredential, assertation: PublicKeyCredential): Promise<Verification> => {
+export const verifyPublicKeyAndSignature = async (publicKey: ArrayBuffer, assertation: PublicKeyCredential): Promise<Verification> => {
   // verify signature on server
-  const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey()
   const response = await assertation.response as AuthenticatorAssertionResponse;
   const signature = response.signature;
   console.log("SIGNATURE", signature)

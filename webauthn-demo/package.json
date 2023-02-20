@@ -17,6 +17,7 @@
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.9.0",
     "@rainbow-me/rainbowkit": "^0.8.1",
+    "dexie": "^3.2.3",
     "did-session": "^1.0.0",
     "ethers": "^5.7.2",
     "framer-motion": "^6.3.0",

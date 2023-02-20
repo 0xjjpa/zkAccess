@@ -33,7 +33,7 @@ export const ClubsContainer = ({ setStage, setup, manage }: { setStage: Dispatch
         <Tab>Add +</Tab>
         {
           clubs.map(club => (
-            <Tab><Text fontFamily="mono" fontSize="xs">{club.node.title}</Text></Tab>
+            <Tab key={club.node.id}><Text fontFamily="mono" fontSize="xs">{club.node.title}</Text></Tab>
           ))
         }
       </TabList>

@@ -26,6 +26,7 @@ export type AccountResponse = {
   node: {
     account: {
       rawId: string
+      publicKey: string
     }
   }
 }
@@ -48,6 +49,7 @@ export type CreateAccountRespons = {
   createAccount: {
     document: {
       rawId: string;
+      publicKey: string;
     }
   }
 }
@@ -61,6 +63,7 @@ export const loadAccount = async(session: DIDSession) => {
           ...on CeramicAccount {
             account {
               rawId
+              publicKey
             }
           }
         }
@@ -68,7 +71,6 @@ export const loadAccount = async(session: DIDSession) => {
     `
     console.log("🔑 Loading account with following DID", did.parent);
     const { data, errors } = await composeClient.executeQuery<AccountResponse>(query);
-    console.log("DATA", data);
     if (errors) {
       console.error('[ SDK - loadAccount ] Error while loading account', errors);
     }
@@ -78,18 +80,20 @@ export const loadAccount = async(session: DIDSession) => {
   }
 }
 
-export const createAccount = async (rawId: string) => {
+export const createAccount = async (rawId: string, publicKey: string) => {
   try {
     const query = `
       mutation {
         createAccount(input: {
           content: {
             rawId: "${rawId}"
+            publicKey: "${publicKey}"
           }
         }) 
         {
           document {
             rawId
+            publicKey
           }
         }
       }

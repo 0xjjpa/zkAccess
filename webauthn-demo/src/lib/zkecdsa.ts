@@ -1,4 +1,4 @@
-import { keyToInt, generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList, writeJson, Newable, readJson } from '@cloudflare/zkp-ecdsa'
+import { generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList, writeJson, Newable, readJson } from '@cloudflare/zkp-ecdsa'
 import { buf2hex, hex2buf } from '../helpers/buffers'
 
 export type ZkAttestation = {
@@ -6,8 +6,7 @@ export type ZkAttestation = {
   proof: SignatureProofList
 }
 
-export const importPublicKey = async (credential: PublicKeyCredential): Promise<CryptoKey> => {
-  const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey()
+export const importPublicKey = async (publicKey: ArrayBuffer): Promise<CryptoKey> => {
   console.log('🔑 Public Key loaded from credential response', publicKey);
   console.log('🔑 Public Key but as Hex', buf2hex(publicKey));
   console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");
@@ -45,9 +44,9 @@ export const verifyZkAttestProof = async(msgHash: Uint8Array, listKeys: bigint[]
   return valid;
 }
 
-export const createZkAttestProofAndVerify = async(keys: bigint[], credential: PublicKeyCredential, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
+export const createZkAttestProofAndVerify = async(keys: bigint[], publicKey: ArrayBuffer, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
   const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
-  const key = await importPublicKey(credential);
+  const key = await importPublicKey(publicKey);
   const listKeys = keys;
   console.log("📋 List of Keys", listKeys);
   const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);

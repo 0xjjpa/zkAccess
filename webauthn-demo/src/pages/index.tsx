@@ -25,6 +25,7 @@ import { ClubButton } from "../components/ClubButton";
 import { ClubsContainer } from "../components/ClubsContainer";
 import { RegisterButton } from "../components/RegisterButton";
 import { SelfRegisterButton } from "../components/SelfRegisterButton";
+import { ClubMembers } from "../components/ClubMembers";
 
 
 const Index = () => {
@@ -73,22 +74,23 @@ const Index = () => {
           manage={
             <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
               {hasWalletConnected &&
-                <SimpleGrid spacing={2} columns={1}>
-                  <SelfRegisterButton />
-                  <RegisterButton />
-                </SimpleGrid>
+                <>
+                  <SimpleGrid spacing={2} columns={1}>
+                    <SelfRegisterButton />
+                    <RegisterButton />
+                  </SimpleGrid>
+                  <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
+                    <Flex justifyContent="center" mt="5" flexDirection="column">
+                      <Text color="text" fontFamily="mono" textAlign="center">
+                        Members
+                      </Text>
+                      <Flex justifyContent="space-between" alignItems="center" my="2">
+                        <ClubMembers />
+                      </Flex>
+                    </Flex>
+                  </SimpleGrid>
+                </>
               }
-
-              {/* <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
-            <Flex justifyContent="center" mt="5" flexDirection="column">
-              <Text color="text" fontFamily="mono" textAlign="center">
-                Members
-              </Text>
-              <Flex justifyContent="space-between" alignItems="center" my="2">
-                <UniverseKeyring myPublicKey={"hello"} />
-              </Flex>
-            </Flex>
-          </SimpleGrid> */}
             </SimpleGrid>
           } />
         }
