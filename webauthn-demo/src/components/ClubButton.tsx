@@ -22,6 +22,6 @@ export const ClubButton = () => {
       disabled={hasAtLeastOneClub}
       onClick={() => createClubHandler()}
     >
-      {hasAtLeastOneClub ? 'Create 🫂 (Locked)' : 'Create 🫂'}
+      {hasAtLeastOneClub ? 'Create Club 🫂 (Locked)' : 'Create Club 🫂'}
     </Button>)
 }

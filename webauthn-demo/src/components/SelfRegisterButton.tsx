@@ -129,7 +129,7 @@ export const SelfRegisterButton = () => {
           : addCredentialsHelper()  
       }}
     >
-      {!rawId ? "Create Account 👤" : !signature ? "Load Account 👤" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "Key Added ✅" : "Add Key 🔑"}
+      {!rawId ? "Create ID 👤" : !signature ? "Load ID 🪪" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "ID Added ✅" : "Add ID 🪪"}
     </Button>
   )
 }

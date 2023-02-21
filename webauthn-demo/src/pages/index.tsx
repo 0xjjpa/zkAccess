@@ -26,6 +26,7 @@ import { ClubsContainer } from "../components/ClubsContainer";
 import { RegisterButton } from "../components/RegisterButton";
 import { SelfRegisterButton } from "../components/SelfRegisterButton";
 import { ClubMembers } from "../components/ClubMembers";
+import { DisplayButton } from "../components/DisplayButton";
 
 
 const Index = () => {
@@ -68,16 +69,18 @@ const Index = () => {
           setup={
             <SimpleGrid spacing={2} columns={1}>
               <ClubButton />
-              <Button size="sm" disabled>Load (WIP)📀</Button>
+              <Button size="sm" disabled>Load Club 📀 (WIP)</Button>
             </SimpleGrid>
           }
           manage={
             <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
               {hasWalletConnected &&
                 <>
-                  <SimpleGrid spacing={2} columns={1}>
+                  <SimpleGrid spacing={2} columns={2}>
                     <SelfRegisterButton />
+                    <Button size="sm" disabled>Remove Id (WIP) ❌</Button>
                     <RegisterButton />
+                    <DisplayButton />
                   </SimpleGrid>
                   <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
                     <Flex justifyContent="center" mt="5" flexDirection="column">

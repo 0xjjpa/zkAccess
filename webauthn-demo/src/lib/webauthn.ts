@@ -17,7 +17,7 @@ const DOMAIN_ID = `${process.env.NEXT_PUBLIC_VERCEL_PRODUCTION_URL ? process.env
 const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
   rp: {
     name: "zkAccess",
-    id: DOMAIN_ID
+    // id: DOMAIN_ID
   },
   user: {
     id: new Uint8Array(16),
