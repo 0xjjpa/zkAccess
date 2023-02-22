@@ -13,5 +13,4 @@ export const STAGES = {
 export const LOADING_MESSAGE = "Loading...";
 
 const ONE_SECOND_IN_MS = 1000;
-const THREE_SECONDS_IN_MS = ONE_SECOND_IN_MS * 3;
-export const MINIMAL_CALLBACK_TIME = THREE_SECONDS_IN_MS;
+export const MINIMAL_CALLBACK_TIME = ONE_SECOND_IN_MS;

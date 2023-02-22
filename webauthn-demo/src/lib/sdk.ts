@@ -54,7 +54,7 @@ export type CreateAccountRespons = {
   }
 }
 
-export const loadAccount = async(session: DIDSession) => {
+export const loadAccount = async(session: DIDSession, setIsCeramicNodeOffline: (boolean) => void) => {
   try {
     const did = session.did
     const query = `
@@ -73,10 +73,12 @@ export const loadAccount = async(session: DIDSession) => {
     const { data, errors } = await composeClient.executeQuery<AccountResponse>(query);
     if (errors) {
       console.error('[ SDK - loadAccount ] Error while loading account', errors);
+      setIsCeramicNodeOffline(true);
     }
     return data;
   } catch (e) {
-    console.error('[ SDK - loadAccount ] Error while loading account', e);
+    console.error('[ SDK - loadAccount | catch ] Error while loading account', e);
+    setIsCeramicNodeOffline(true);
   }
 }
 
@@ -105,7 +107,7 @@ export const createAccount = async (rawId: string, publicKey: string) => {
     }
     return data;
   } catch (e) {
-    console.log('[ SDK - createAccount ] Error while creating account', e);
+    console.log('[ SDK - createAccount | catch ] Error while creating account', e);
   }
 }
 
@@ -132,7 +134,7 @@ export const updateClubs = async (streamId: string, keys: string[], key: string)
     }
     return data;
   } catch (e) {
-    console.error('[ SDK - updateClubs ] Errors while updating clubs', e);
+    console.error('[ SDK - updateClubs  | catch ] Errors while updating clubs', e);
   }
 }
 
@@ -166,7 +168,7 @@ export const loadClubs = async (session: DIDSession): Promise<Club[]> => {
     }
     return data?.node?.keyringList?.edges
   } catch (e) {
-    console.error('[ SDK - loadClubs ] Errors while loading clubs', e);
+    console.error('[ SDK - loadClubs | catch ] Errors while loading clubs', e);
   }
 }
 
@@ -200,6 +202,6 @@ export const createClub = async (title: string) => {
     }
     return data;
   } catch (e) {
-    console.error('[ SDK - createClub ] Error while creating club', e);
+    console.error('[ SDK - createClub | catch ] Error while creating club', e);
   }
 }

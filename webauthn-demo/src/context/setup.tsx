@@ -16,7 +16,7 @@ const SetupProvider = ({ children, setClubs, clubs }: { children: React.ReactNod
 
   useEffect(() => {
     setProviderClubs(clubs)
-    setCounter(clubs.length);
+    setCounter(clubs ? clubs.length : 0);
     console.log(`⚙️ Setup has loaded ${clubs.length} clubs:`, clubs)
   }, [clubs])
 

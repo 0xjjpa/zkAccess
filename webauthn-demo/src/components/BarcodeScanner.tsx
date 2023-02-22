@@ -1,21 +1,20 @@
-import { useState } from "react";
-import { useZxing } from "react-zxing";
+import { useEffect } from "react";
+import QrHunter from '@stevent-team/react-qr-hunter'
 
-export const BarcodeScanner = () => {
-  const [result, setResult] = useState("");
-  const { ref } = useZxing({
-    onResult(result) {
-      setResult(result.getText());
-    },
-  });
+
+export const BarcodeScanner = ({ setBarcodeValue }: { setBarcodeValue: (string) => void }) => {
+  useEffect(() => {
+    console.log('(ℹ️,ℹ️) Loading Video...');
+  }, [])
 
   return (
     <>
-      <video ref={ref} />
-      <p>
-        <span>Last result:</span>
-        <span>{result}</span>
-      </p>
-    </>
-  );
+      <QrHunter
+        onScan={(result) => {
+          console.log('(📸,ℹ️) Obtained result from barcode scanned', result);
+          setBarcodeValue(result.data);
+        }}
+        onError={(error) => console.log(error)}
+      />
+    </>);
 };

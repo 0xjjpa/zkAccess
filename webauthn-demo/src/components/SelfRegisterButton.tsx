@@ -1,58 +1,49 @@
-import { Button } from "@chakra-ui/react";
+import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { STAGES, Stage } from "../constants/stages";
 import { USER } from "../constants/webauthn";
 import { useCeramic } from "../context/ceramic";
 import { useClub } from "../context/club";
-import { buf2hex, hex2buf } from "../helpers/buffers";
+import { buf2hex } from "../helpers/buffers";
 import { waitPromise, delay } from "../helpers/promises";
-import { createAccount, loadAccount, updateClubs } from "../lib/sdk";
+import { createAccount, updateClubs } from "../lib/sdk";
 import { verifyPublicKeyAndSignature } from "../lib/verification";
 import { createNavigatorCredentials, credentialRequestOptions, credentialRequestWithAllowedCredentialsInPublicKey, generateIdList, loadNavigatorCredentials } from "../lib/webauthn";
+import { QrCode } from "./QRCode";
 
-export const SelfRegisterButton = () => {
+export const SelfRegisterButton = ({ rawId, publicKey, setRawId, setPublicKey }: { rawId: ArrayBuffer, publicKey: ArrayBuffer, setRawId: (ArrayBuffer) => void, setPublicKey: (ArrayBuffer) => void }) => {
   const [isLoading, setLoading] = useState(false);
-  const [rawId, setRawId] = useState<ArrayBuffer>();
-  const [publicKey, setPublicKey] = useState<ArrayBuffer>();
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const [dataPayload, setDataPayload] = useState<Uint8Array>();
   const [signature, setSignature] = useState<ArrayBuffer>();
   const [hasAccount, setHasAccount] = useState<boolean>();
   const [hasValidSignature, setHasValidSignature] = useState<boolean>();
   const [hasVerifiedAccount, setHasVerifiedAccount] = useState<boolean>();
   const [hasKeyAlreadyIn, setHasKeyAlreadyIn] = useState<boolean>();
+  const [DIDQRPayload, setDIDQRPayload] = useState<string>();
 
   const { keys: existingKeys, setKeys, streamId } = useClub();
   const { session } = useCeramic();
 
 
-  const loadRawId = async () => {
-    console.log('🪪 Loading credentials from user...', session.did.parent)
-    const accountResponse = await loadAccount(session);
-    if (accountResponse?.node?.account?.rawId) {
-      const rawId = hex2buf(accountResponse?.node?.account?.rawId);
-      const publicKey = hex2buf(accountResponse?.node?.account?.publicKey);
-      console.log('🪪 Credential found!', rawId)
-      setRawId(rawId);
-      setPublicKey(publicKey);
-    }
-  }
-
-  const loadCredentialsHandler = async() => {   
+  const loadCredentialsHandler = async () => {
     const enhancedCredentialRequestOptions =
       credentialRequestWithAllowedCredentialsInPublicKey(
         credentialRequestOptions,
         generateIdList(rawId)
       );
     const assertation = (await navigator.credentials.get(
-        enhancedCredentialRequestOptions
+      enhancedCredentialRequestOptions
     )) as PublicKeyCredential;
     if (!publicKey) {
       console.log('(🔑,❌) No public key loaded to verify user');
       return;
     }
-    const { isValid, signature } = await verifyPublicKeyAndSignature(publicKey, assertation);
+    const { isValid, signature, data } = await verifyPublicKeyAndSignature(publicKey, assertation);
     console.log("(🪪,👁️) Assertation response data", isValid);
     setSignature(signature);
     setHasValidSignature(isValid);
+    setDataPayload(data);
   }
 
   useEffect(() => {
@@ -69,9 +60,6 @@ export const SelfRegisterButton = () => {
     console.log(`(ℹ️,ℹ️) current user verified state: First time - ${!!rawId}, Loaded Account - ${!!hasAccount}, Verified Signature ${!!hasVerifiedAccount}`);
   }, [rawId, hasAccount, hasVerifiedAccount])
 
-  useEffect(() => {
-    session && loadRawId();
-  }, [session])
 
   useEffect(() => {
     const publicKeyAsHex = buf2hex(publicKey);
@@ -90,19 +78,16 @@ export const SelfRegisterButton = () => {
 
     const createAccountResponse = await createAccount(buf2hex(credential.rawId), publicKeyAsHex);
     console.log('🪪 Account Created', createAccountResponse);
-    
+
     setLoading(false);
-    
+
     delay(async () => {
-      // @TODO: Identify if this is still needed.
-      // const key = await importPublicKey(credential);
-      // setKey(await keyToInt(key));
       setPublicKey(publicKey)
       setRawId(credential.rawId);
     });
   };
 
-  const addCredentialsHelper = async() => {
+  const addCredentialsHelper = async () => {
     if (!hasAccount) {
       console.log('(🪪,❌) No Credential found, can’t add, exiting.');
       return;
@@ -115,21 +100,49 @@ export const SelfRegisterButton = () => {
     setKeys(updateClubsResponse?.updateKeyring?.document?.keys);
   }
 
-  
+  const displayDID = async () => {
+    setLoading(true);
+    // @TODO: We'll not share this, but the DID for users to fetch.
+    // const signatureAsHex = buf2hex(signature);
+    // const dataAsHex = buf2hex(dataPayload);
+    const qrPayload = session.did.parent;
+    setDIDQRPayload(qrPayload);
+    console.log("(👤,👀) DID displayed", qrPayload);
+    delay(async () => {
+      onOpen()
+      setLoading(false);
+    });
+  }
+
+
   return (
-    <Button
-      size="sm"
-      isLoading={isLoading}
-      disabled={!!rawId && !!signature && (!hasVerifiedAccount || hasKeyAlreadyIn)}
-      onClick={() => {
-        !rawId
-          ? createCredentialsHandler(USER.email, USER.name) // Create new account.
-          : !signature ? 
-            loadCredentialsHandler() // @TODO: Remove from array (not really possible so...)
-          : addCredentialsHelper()  
-      }}
-    >
-      {!rawId ? "Create ID 👤" : !signature ? "Load ID 🪪" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "ID Added ✅" : "Add ID 🪪"}
-    </Button>
+    <>
+      <Button
+        size="sm"
+        isLoading={isLoading}
+        onClick={() => {
+          !rawId
+            ? createCredentialsHandler(USER.email, USER.name) // Create new account.
+            : !signature ?
+              loadCredentialsHandler() // @TODO: Remove from array (not really possible so...)
+              : hasKeyAlreadyIn ? displayDID() : addCredentialsHelper()
+        }}
+      >
+        {!rawId ? "Create DID 👤" : !signature ? "Load Signature 🖊️" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "Show DID 👤" : "Add ID 🪪"}
+      </Button>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent mx="5">
+          <ModalHeader>Displaying DID 👤</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody textAlign="center">
+            <QrCode payload={DIDQRPayload} />
+          </ModalBody>
+          <ModalFooter>
+            <Button variant='ghost' onClick={onClose}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   )
 }

@@ -12,7 +12,7 @@ export const ClubsContainer = ({ setStage, setup, manage }: { setStage: Dispatch
   const [tabIndex, setTabIndex] = useState(0)
 
   const setupClubs = async () => {
-    if (clubs.length == 0) {
+    if (clubs?.length == 0) {
       const clubs = await loadClubs(session);
       setClubs(clubs);
     }
@@ -32,8 +32,8 @@ export const ClubsContainer = ({ setStage, setup, manage }: { setStage: Dispatch
       <TabList>
         <Tab>Add +</Tab>
         {
-          clubs.map(club => (
-            <Tab key={club.node.id}><Text fontFamily="mono" fontSize="xs">{club.node.title}</Text></Tab>
+          clubs && clubs.length > 0 && clubs.map(club => (
+            <Tab key={club?.node?.id}><Text fontFamily="mono" fontSize="xs">{club?.node?.title}</Text></Tab>
           ))
         }
       </TabList>
@@ -45,9 +45,11 @@ export const ClubsContainer = ({ setStage, setup, manage }: { setStage: Dispatch
           </SetupProvider>
         </TabPanel>
         <TabPanel>
-          <ClubProvider club={clubs[tabIndex - 1]}>
-            {manage}
-          </ClubProvider>
+          {clubs &&
+            <ClubProvider club={clubs[tabIndex - 1]}>
+              {manage}
+            </ClubProvider>
+          }
         </TabPanel>
       </TabPanels>
     </Tabs>
