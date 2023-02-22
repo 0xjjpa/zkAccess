@@ -1,4 +1,4 @@
-import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from "@chakra-ui/react";
+import { Button, Code, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { STAGES, Stage } from "../constants/stages";
 import { USER } from "../constants/webauthn";
@@ -105,7 +105,7 @@ export const SelfRegisterButton = ({ rawId, publicKey, setRawId, setPublicKey }:
     // @TODO: We'll not share this, but the DID for users to fetch.
     // const signatureAsHex = buf2hex(signature);
     // const dataAsHex = buf2hex(dataPayload);
-    const qrPayload = session.did.parent;
+    const qrPayload = session?.did?.parent;
     setDIDQRPayload(qrPayload);
     console.log("(👤,👀) DID displayed", qrPayload);
     delay(async () => {

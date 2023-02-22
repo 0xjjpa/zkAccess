@@ -45,6 +45,12 @@ export type UpdateClubResponse = {
   }
 }
 
+export type GetKeysFromClubResponse = {
+  node: {
+    keys: string[]
+  }
+}
+
 export type CreateAccountRespons = {
   createAccount: {
     document: {
@@ -108,6 +114,28 @@ export const createAccount = async (rawId: string, publicKey: string) => {
     return data;
   } catch (e) {
     console.log('[ SDK - createAccount | catch ] Error while creating account', e);
+  }
+}
+
+export const loadKeysFromCLub = async(streamId: string) => {
+  try {
+    const query = `
+      query {
+        node(id: "${streamId}") {
+          ...on Keyring {
+            keys
+          }
+        }
+      }
+    `
+    console.log("🔑 Loading keys from the following club", streamId);
+    const { data, errors } = await composeClient.executeQuery<GetKeysFromClubResponse>(query);
+    if (errors) {
+      console.error('[ SDK - loadKeysFromCLub ] Error while fetching keys from club', errors);
+    }
+    return data;
+  } catch (e) {
+    console.error('[ SDK - loadKeysFromCLub | catch ] Error while fetching keys from club', e);
   }
 }
 

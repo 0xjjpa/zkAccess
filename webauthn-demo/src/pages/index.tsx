@@ -104,9 +104,9 @@ const Index = () => {
                     <>
                       <SimpleGrid spacing={2} columns={2}>
                         <SelfRegisterButton setRawId={setRawId} setPublicKey={setPublicKey} rawId={rawId} publicKey={publicKey} />
+                        <VerifyButton publicKey={publicKey} />
                         <DisplayButton publicKey={publicKey} />
                         <RegisterButton />
-                        <VerifyButton />
                       </SimpleGrid>
                       <SimpleGrid spacing={2} columns={[1, 1, 1, 1]}>
                         <Flex justifyContent="center" mt="5" flexDirection="column">

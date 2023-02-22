@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useClub } from "../context/club";
 import { AvatarWithTitle } from "./AvatarWithTitle";
 
-export const ClubMembers = ({ publicKeyAsHex }: { publicKeyAsHex: string }) => {
+export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { publicKeyAsHex: string, keysAsParameter?: string[] }) => {
   const [isLoading, setLoading] = useState(false);
   const [keys, setKeys] = useState([]);
 
@@ -11,6 +11,7 @@ export const ClubMembers = ({ publicKeyAsHex }: { publicKeyAsHex: string }) => {
 
   useEffect(() => {
     existingKeys && existingKeys.length > 0 && setKeys(existingKeys);
+    if (keysAsParameter) setKeys(keysAsParameter);
   }, [existingKeys])
 
   return (

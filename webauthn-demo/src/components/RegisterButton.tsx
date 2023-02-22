@@ -1,4 +1,4 @@
-import { Text, useDisclosure, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Box } from "@chakra-ui/react"
+import { Text, useDisclosure, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Box, Code } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import { useClub } from "../context/club"
 import { hex2buf } from "../helpers/buffers"
@@ -65,11 +65,11 @@ export const RegisterButton = () => {
                   </> :
                   <BarcodeScanner setBarcodeValue={setpublicKeyAsQRCodedHex} /> :
                 <>
-                  <Text fontSize="sm">You'll be prompted for camera access. We’ll use your device
-                    camera to scan QR codes with your friend’s ID.</Text>
-                  <Text fontSize="sm" mt="2">To register a user into your club, you need to scan their
-                    QR code with their public key. Ask them to click the “Show ID” button and
+                  <Text fontSize="sm">To register a user into your club, you need to scan their
+                    QR code with their public key. Ask them to select the button <Code px="2">Show zKey 🔑</Code> and
                     scan the QR code shown.</Text>
+                  <Text fontSize="xs" mt="4">You'll be prompted for camera access. We’ll use your device
+                    camera to scan QR codes from your friends.</Text>
                 </>
             }
           </ModalBody>
@@ -80,7 +80,7 @@ export const RegisterButton = () => {
                 onClose()
               }}>Add to club 🪪</Button> :
               <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
-                {enableBarcodeScanner ? 'Close Camera 📷' : 'Open Camera 📸'}
+                {enableBarcodeScanner ? 'Close Camera 📷' : 'Register zKey 📸'}
               </Button>}
             <Button variant='ghost' onClick={onClose}>Close</Button>
           </ModalFooter>
