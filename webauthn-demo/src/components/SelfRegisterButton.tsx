@@ -11,11 +11,9 @@ import { verifyPublicKeyAndSignature } from "../lib/verification";
 import { createNavigatorCredentials, credentialRequestOptions, credentialRequestWithAllowedCredentialsInPublicKey, generateIdList, loadNavigatorCredentials } from "../lib/webauthn";
 import { QrCode } from "./QRCode";
 
-export const SelfRegisterButton = ({ rawId, publicKey, setRawId, setPublicKey }: { rawId: ArrayBuffer, publicKey: ArrayBuffer, setRawId: (ArrayBuffer) => void, setPublicKey: (ArrayBuffer) => void }) => {
+export const SelfRegisterButton = ({ rawId, publicKey, signature, setRawId, setPublicKey, setDataPayload, setSignature }: { rawId: ArrayBuffer, publicKey: ArrayBuffer, signature: ArrayBuffer, setRawId: (ArrayBuffer) => void, setPublicKey: (ArrayBuffer) => void, setDataPayload: (Uint8Array) => void, setSignature: (ArrayBuffer) => void }) => {
   const [isLoading, setLoading] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [dataPayload, setDataPayload] = useState<Uint8Array>();
-  const [signature, setSignature] = useState<ArrayBuffer>();
   const [hasAccount, setHasAccount] = useState<boolean>();
   const [hasValidSignature, setHasValidSignature] = useState<boolean>();
   const [hasVerifiedAccount, setHasVerifiedAccount] = useState<boolean>();

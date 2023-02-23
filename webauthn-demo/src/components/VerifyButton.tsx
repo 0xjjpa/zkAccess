@@ -1,22 +1,24 @@
 import { Text, Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, Flex } from "@chakra-ui/react";
+import { keyToInt, SignatureProofList, SystemParametersList, writeJson } from "@cloudflare/zkp-ecdsa";
 import { useEffect, useState } from "react";
 import { useCeramic } from "../context/ceramic";
 import { useClub } from "../context/club";
 import { buf2hex, hex2buf } from "../helpers/buffers";
-import { importPublicKey } from "../helpers/publicKeys";
 import { loadKeysFromCLub } from "../lib/sdk";
+import { createZkAttestProofAndVerify, generateZkAttestProof, importPublicKey, ZkAttestation } from "../lib/zkecdsa";
 import { Avatar } from "./Avatar";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ClubMembers } from "./ClubMembers";
 import { QrCode } from "./QRCode";
 
-export const VerifyButton = ({ publicKey }: { publicKey: ArrayBuffer }) => {
+export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature: Uint8Array, dataPayload: Uint8Array, publicKey: ArrayBuffer }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setLoading] = useState(false);
   const [enableBarcodeScanner, setEnableBarcodeScanner] = useState(false);
   const [publicKeyAsHex, setPublicKeyAsHex] = useState<string>();
   const [StreamIDAsQRCodedHex, setStreamIDAsQRCodedHex] = useState<string>("");
   const [hasRegisteredStreamID, setHasRegisteredStreamID] = useState<boolean>();
+  const [zkAttestation, setZkAttestation] = useState<ZkAttestation>();
   const [memberIsInClub, setMemberIsInClub] = useState<string[]>([]);
 
   const { session } = useCeramic();
@@ -38,11 +40,29 @@ export const VerifyButton = ({ publicKey }: { publicKey: ArrayBuffer }) => {
     const validateStreamID = async () => {
       console.log('(🖊️,ℹ️) - Signature has value, ready to try and import it');
       const keysResponse = await loadKeysFromCLub(StreamIDAsQRCodedHex)
+      console.log('(🔑,ℹ️) - Keys from loadKeysFromClub Response');
       const keys = keysResponse?.node?.keys || []
+      console.log('(🔑,🫂) - Keys from club obtained');
       setMemberIsInClub(keys);
     }
     StreamIDAsQRCodedHex && StreamIDAsQRCodedHex.length > 1 && validateStreamID();
   }, [StreamIDAsQRCodedHex])
+
+  const createProofHandler = async () => {
+    const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', dataPayload));
+    const key = await importPublicKey(publicKey);
+    const listKeys = await Promise.all(memberIsInClub.map( async (membersAsPublicKeysInHexFormat) => {
+      const publicKey = hex2buf(membersAsPublicKeysInHexFormat);
+      const key = await importPublicKey(publicKey);
+      const keyAsInt = await keyToInt(key);
+      return keyAsInt
+    }));
+    console.log("📋 List of Keys", listKeys);
+    const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);
+    console.log("(🧾,ℹ️) Attestation created", attestation);
+    // @TODO: Ay lmao the proof is roughly 0.6mbs
+    setZkAttestation(attestation);
+  }
 
   return (
     <>
@@ -61,23 +81,46 @@ export const VerifyButton = ({ publicKey }: { publicKey: ArrayBuffer }) => {
           <ModalBody>
             {
               enableBarcodeScanner ?
-                hasRegisteredStreamID ?
+                !!StreamIDAsQRCodedHex ?
+                  !!zkAttestation ?
                   <>
-                    <Text fontSize="sm">✅ We have a StreamID</Text>
+                    <Text fontSize="sm">✅ You have created a valid proof</Text>
                     <Box m="2">
-                      <Text>We'll know proceed to load the StreamID's group</Text>
-                      <ClubMembers publicKeyAsHex={publicKeyAsHex} keysAsParameter={memberIsInClub}/>
+                      <Text>Here is the zero knowledge proof you need to show up.</Text>
+                      <Box mt="5">
+                        <Text >Displaying this proof will not disclose anything about who you are within the club you are
+                          trying to showcase you are a member of.
+                        </Text>
+                      </Box>
+                      <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Proof</Text><QrCode payload={"Lol."} /></Flex>
+                    </Box>
+                  </> :
+                  <>
+                    <Text fontSize="sm">✅ You have scanned a valid Club ID</Text>
+                    <Box m="2">
+                      <Text>Here are the members from the Club ID you have scanned:</Text>
+                      <Flex justifyContent="space-between" alignItems="center" my="2">
+                        <ClubMembers publicKeyAsHex={publicKeyAsHex} keysAsParameter={memberIsInClub} />
+                      </Flex>
+                      <Box mt="5">
+                        <Text >Now you can create a zero-knowledge proof that you are part of that club (or not)
+                          without disclosing it’s you the one requesting access.
+                        </Text>
+                      </Box>
                     </Box>
                   </> :
                   <BarcodeScanner setBarcodeValue={setStreamIDAsQRCodedHex} /> :
                 <>
                   <Text fontSize="sm">To verify whether a user is in your club, you need to first show your
-                    club StreamID to your friend that's trying to prove membership to your club. Once they have scanned
-                    your StreamID, then they will generate a zero-knowledge proof you can then use to show access</Text>
+                    club ID to your friend that's trying to prove membership to your club. Once they have scanned
+                    your Club ID, then they will generate a zero-knowledge proof you can then use to show access</Text>
                   {
-                    streamId ?
-                      <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Stream ID</Text><QrCode payload={streamId} /></Flex> :
-                      <Text fontWeight="bold">Please make sure to have loaded your DID. Exit this dialog and select
+                    streamId &&
+                      <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Club ID</Text><QrCode payload={streamId} /></Flex>
+                  }
+                  {
+                    (!dataPayload || !signature) &&
+                    <Text fontWeight="bold">Please make sure to have loaded your DID. Exit this dialog and select
                         the “Load Signature 🖊️” option.</Text>
                   }
 
@@ -87,13 +130,14 @@ export const VerifyButton = ({ publicKey }: { publicKey: ArrayBuffer }) => {
             }
           </ModalBody>
           <ModalFooter>
-            {hasRegisteredStreamID ?
+            {(dataPayload && signature) && hasRegisteredStreamID ?
               <Button colorScheme="blue" onClick={async () => {
                 await verifySignatureHandler(StreamIDAsQRCodedHex)
               }}>Verify Signature 🪪</Button> :
-              <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
-                {enableBarcodeScanner ? 'Close Camera 📷' : 'Open Camera 📸'}
-              </Button>}
+              isOpen && !!StreamIDAsQRCodedHex ? zkAttestation ? <></> : <Button onClick={() => createProofHandler()} colorScheme="green">Create Proof 🧾</Button> :
+                <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
+                  {enableBarcodeScanner ? 'Close Camera 📷' : 'Open Camera 📸'}
+                </Button>}
             <Button variant='ghost' onClick={onClose}>Close</Button>
           </ModalFooter>
         </ModalContent>

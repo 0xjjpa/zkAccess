@@ -10,10 +10,10 @@ export const importPublicKey = async (publicKey: ArrayBuffer): Promise<CryptoKey
   console.log('🔑 Public Key loaded from credential response', publicKey);
   console.log('🔑 Public Key but as Hex', buf2hex(publicKey));
   console.log("⏳ Roundtrip to verify hex2buf/buf2hex, remove on dev");
-  const pk = hex2buf(buf2hex(publicKey));
+  //const pk = hex2buf(buf2hex(publicKey));
   const key = await crypto.subtle.importKey(
     "spki", // "spki" Simple Public Key Infrastructure rfc2692
-    pk,
+    publicKey,
     {
       name: "ECDSA",
       namedCurve: "P-256",

@@ -33,6 +33,9 @@ const Index = () => {
   // @TODO: Identify if this is still needed.
   // const [isLoadingProcess, setLoadingProcess] = useState(false);
   // const [isAssertationValid, setAssertation] = useState<boolean>();
+  const [dataPayload, setDataPayload] = useState<Uint8Array>();
+  const [signature, setSignature] = useState<ArrayBuffer>();
+
   const [isLoadingStage, setLoadingStage] = useState(false);
   const [isCeramicNodeOffline, setIsCeramicNodeOffline] = useState(false);
   const [currentStage, setStage] = useState<Stage>(Stage.STAGE_0);
@@ -103,8 +106,8 @@ const Index = () => {
                   {hasWalletConnected &&
                     <>
                       <SimpleGrid spacing={2} columns={2}>
-                        <SelfRegisterButton setRawId={setRawId} setPublicKey={setPublicKey} rawId={rawId} publicKey={publicKey} />
-                        <VerifyButton publicKey={publicKey} />
+                        <SelfRegisterButton signature={signature} setSignature={setSignature} setDataPayload={setDataPayload} setRawId={setRawId} setPublicKey={setPublicKey} rawId={rawId} publicKey={publicKey} />
+                        <VerifyButton signature={signature} dataPayload={dataPayload} publicKey={publicKey} />
                         <DisplayButton publicKey={publicKey} />
                         <RegisterButton />
                       </SimpleGrid>
