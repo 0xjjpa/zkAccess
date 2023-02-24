@@ -1,4 +1,4 @@
-import { Box, Flex } from "@chakra-ui/react"
+import { Box, Flex, SimpleGrid } from "@chakra-ui/react"
 import { useEffect, useState } from "react";
 import { useClub } from "../context/club";
 import { truncate } from "../helpers/strings";
@@ -16,7 +16,7 @@ export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { p
   }, [existingKeys])
 
   return (
-    <>
+    <SimpleGrid columns={[5,5,8,10]} justifyContent="space-around" width="100%">
       {isLoading ? <>Loading...</> : keys.map(publicKey => {
         const isSelfKey = publicKeyAsHex === publicKey;
         console.log(`(🔑, ℹ️) SelfKey: ${truncate(publicKeyAsHex)}, Current Key: ${truncate(publicKey)}`);
@@ -27,12 +27,12 @@ export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { p
             // bg={isSelfKey ? "green.900" : "gray.600"} // @TODO: Make bg dynamic based on theme.
             p="1"
           >
-            {isSelfKey && <Box top="2.5" right="0" width="10px" height="10px" background="green.900" pos="absolute" borderRadius="50%">{' '}</Box>}
+            {isSelfKey && <Box top="2.5" right="20%" width="10px" height="10px" background="green.900" pos="absolute" borderRadius="50%">{' '}</Box>}
             <AvatarWithTitle publicKeyAsHex={publicKey} title={isSelfKey ? '(You)' : `${truncate(publicKey)}`} />
           </Flex>
         )
       }
       )}
-    </>
+    </SimpleGrid>
   )
 }

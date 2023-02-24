@@ -1,4 +1,4 @@
-import { Text, useDisclosure, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Box, Code } from "@chakra-ui/react"
+import { Text, useDisclosure, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Box, Code, Flex } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import { useClub } from "../context/club"
 import { hex2buf } from "../helpers/buffers"
@@ -8,6 +8,8 @@ import { updateClubs } from "../lib/sdk"
 import { Avatar } from "./Avatar"
 import { AvatarWithTitle } from "./AvatarWithTitle"
 import { BarcodeScanner } from "./BarcodeScanner"
+import { RegisterButtonModalIntro } from "./RegisterButtonModalIntro"
+import { RegisterButtonModalSuccess } from "./RegisterButtonModalSuccess"
 
 export const RegisterButton = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -40,7 +42,17 @@ export const RegisterButton = () => {
       }
     }
     publicKeyAsQRCodedHex && publicKeyAsQRCodedHex.length > 1 && validatePublicKey();
+    return (() => {
+      setHasValidPublicKey(undefined);
+    })
   }, [publicKeyAsQRCodedHex])
+
+  const clearComponent = () => {
+    setEnableBarcodeScanner(false);
+    setHasValidPublicKey(undefined);
+    setpublicKeyAsQRCodedHex("");
+    onClose();
+  }
 
   return (
     <>
@@ -50,7 +62,7 @@ export const RegisterButton = () => {
       >
         Register zKey 🔑
       </Button>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={clearComponent}>
         <ModalOverlay />
         <ModalContent mx="5">
           <ModalHeader>Register zKey 🔑</ModalHeader>
@@ -59,20 +71,9 @@ export const RegisterButton = () => {
             {
               enableBarcodeScanner ?
                 hasValidPublicKey ?
-                  <>
-                    <Text fontSize="sm">✅ We have found the following zKey</Text>
-                    <Box m="2">
-                      <AvatarWithTitle title={truncate(publicKeyAsQRCodedHex)} publicKeyAsHex={publicKeyAsQRCodedHex} />
-                    </Box>
-                  </> :
+                  <RegisterButtonModalSuccess publicKeyAsQRCodedHex={publicKeyAsQRCodedHex} /> :
                   <BarcodeScanner setBarcodeValue={setpublicKeyAsQRCodedHex} /> :
-                <>
-                  <Text fontSize="sm">To register a user into your club, you need to scan their
-                    QR code with their public key. Ask them to select the button <Code px="2">Show zKey 🔑</Code> and
-                    scan the QR code shown.</Text>
-                  <Text fontSize="xs" mt="4">You'll be prompted for camera access. We’ll use your device
-                    camera to scan QR codes from your friends.</Text>
-                </>
+                  <RegisterButtonModalIntro />
             }
           </ModalBody>
           <ModalFooter>
@@ -80,11 +81,11 @@ export const RegisterButton = () => {
               <Button colorScheme="green" onClick={async () => {
                 await registerKeyHandler(publicKeyAsQRCodedHex)
                 onClose()
-              }}>Add to club 🪪</Button> :
+              }}>Add to circle 🪪</Button> :
               <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
                 {enableBarcodeScanner ? 'Close Camera 📷' : 'Register zKey 📸'}
               </Button>}
-            <Button variant='ghost' onClick={onClose}>Close</Button>
+            <Button variant='ghost' onClick={clearComponent}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -36,6 +36,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
       const publicKeyAsHex = buf2hex(publicKey)
       setPublicKeyAsHex(publicKeyAsHex);
     }
+    return (() => setPublicKeyAsHex(undefined))
   }, [publicKey])
 
   useEffect(() => {
@@ -84,6 +85,11 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
       }
     }
     StreamIDAsQRCodedHex && StreamIDAsQRCodedHex.length > 1 && validateStreamID();
+    return (() => {
+      setIsZkProofValid(undefined);
+      setMemberIsInClub([]);
+      setIsStreamID(undefined);
+    })
   }, [StreamIDAsQRCodedHex])
 
   const createProofHandler = async () => {
@@ -158,8 +164,8 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
                         <Text>Here is the zero knowledge proof you need to show up.</Text>
                         <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Proof</Text><QrCode payload={zkAttestationUrl} /></Flex>
                         <Box mt="5">
-                          <Text fontSize="sm">Displaying this proof will show you belong to the club you generated the proof for, without disclosing
-                            who you are within the club. If you do not belong into the club, the proof will be rejected.
+                          <Text fontSize="sm">Displaying this proof will show you belong to the circle you generated the proof for, without disclosing
+                            who you are within the circle. If you do not belong into the circle, the proof will be rejected.
                           </Text>
                         </Box>
                       </Box>
@@ -172,7 +178,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
                           <ClubMembers publicKeyAsHex={publicKeyAsHex} keysAsParameter={memberIsInClub} />
                         </Flex>
                         <Box mt="5">
-                          <Text >Now you can create a zero-knowledge proof that you are part of that club (or not)
+                          <Text >Now you can create a zero-knowledge proof that you are part of that circle (or not)
                             without disclosing it’s you the one requesting access.
                           </Text>
                         </Box>
@@ -194,12 +200,12 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
                   <BarcodeScanner setBarcodeValue={setStreamIDAsQRCodedHex} />
                   :
                 <>
-                  <Text fontSize="sm">To verify whether a user is in your club, you need to first show your
-                    club ID to your friend that's trying to prove membership to your club. Once they have scanned
+                  <Text fontSize="sm">To verify whether a user is in your circle, you need to first show your
+                    circle ID to your friend that's trying to prove membership to your circle. Once they have scanned
                     your Club ID, then they will generate a zero-knowledge proof you can then use to show access</Text>
                   {
                     streamId &&
-                    <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Club ID</Text><QrCode payload={streamId} /></Flex>
+                    <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Circle ID</Text><QrCode payload={streamId} /></Flex>
                   }
                   {
                     (!dataPayload || !signature) &&
