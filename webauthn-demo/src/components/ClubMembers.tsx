@@ -1,6 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react"
 import { useEffect, useState } from "react";
 import { useClub } from "../context/club";
+import { truncate } from "../helpers/strings";
 import { AvatarWithTitle } from "./AvatarWithTitle";
 
 export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { publicKeyAsHex: string, keysAsParameter?: string[] }) => {
@@ -18,6 +19,7 @@ export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { p
     <>
       {isLoading ? <>Loading...</> : keys.map(publicKey => {
         const isSelfKey = publicKeyAsHex === publicKey;
+        console.log(`(🔑, ℹ️) SelfKey: ${truncate(publicKeyAsHex)}, Current Key: ${truncate(publicKey)}`);
         return (
           <Flex
             position="relative"
@@ -26,7 +28,7 @@ export const ClubMembers = ({ publicKeyAsHex, keysAsParameter = undefined }: { p
             p="1"
           >
             {isSelfKey && <Box top="2.5" right="0" width="10px" height="10px" background="green.900" pos="absolute" borderRadius="50%">{' '}</Box>}
-            <AvatarWithTitle publicKeyAsHex={publicKey} title={isSelfKey ? '(You)' : `${publicKey.substr(0, 4)}...`} />
+            <AvatarWithTitle publicKeyAsHex={publicKey} title={isSelfKey ? '(You)' : `${truncate(publicKey)}`} />
           </Flex>
         )
       }

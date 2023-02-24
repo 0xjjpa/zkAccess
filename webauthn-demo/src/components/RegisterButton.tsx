@@ -3,8 +3,10 @@ import { useEffect, useState } from "react"
 import { useClub } from "../context/club"
 import { hex2buf } from "../helpers/buffers"
 import { importPublicKey } from "../helpers/publicKeys"
+import { truncate } from "../helpers/strings"
 import { updateClubs } from "../lib/sdk"
 import { Avatar } from "./Avatar"
+import { AvatarWithTitle } from "./AvatarWithTitle"
 import { BarcodeScanner } from "./BarcodeScanner"
 
 export const RegisterButton = () => {
@@ -60,7 +62,7 @@ export const RegisterButton = () => {
                   <>
                     <Text fontSize="sm">✅ We have found the following zKey</Text>
                     <Box m="2">
-                      <Avatar address={publicKeyAsQRCodedHex} />
+                      <AvatarWithTitle title={truncate(publicKeyAsQRCodedHex)} publicKeyAsHex={publicKeyAsQRCodedHex} />
                     </Box>
                   </> :
                   <BarcodeScanner setBarcodeValue={setpublicKeyAsQRCodedHex} /> :

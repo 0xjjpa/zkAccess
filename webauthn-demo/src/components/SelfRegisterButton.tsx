@@ -77,12 +77,9 @@ export const SelfRegisterButton = ({ rawId, publicKey, signature, setRawId, setP
     const createAccountResponse = await createAccount(buf2hex(credential.rawId), publicKeyAsHex);
     console.log('🪪 Account Created', createAccountResponse);
 
+    setRawId(credential.rawId);
+    setPublicKey(publicKey);
     setLoading(false);
-
-    delay(async () => {
-      setPublicKey(publicKey)
-      setRawId(credential.rawId);
-    });
   };
 
   const addCredentialsHelper = async () => {
@@ -126,7 +123,7 @@ export const SelfRegisterButton = ({ rawId, publicKey, signature, setRawId, setP
               : hasKeyAlreadyIn ? displayDID() : addCredentialsHelper()
         }}
       >
-        {!rawId ? "Create DID 👤" : !signature ? "Load Signature 🖊️" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "Show DID 👤" : "Add ID 🪪"}
+        {!rawId ? "Create Account 👤" : !signature ? "Load Signature 🖊️" : !hasVerifiedAccount ? "Wrong device ❌" : hasKeyAlreadyIn ? "Show DID 👤" : "Add ID 🪪"}
       </Button>
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />

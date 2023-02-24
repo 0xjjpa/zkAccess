@@ -25,14 +25,14 @@ export const importPublicKey = async (publicKey: ArrayBuffer): Promise<CryptoKey
   return key;
 }
 
-export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: CryptoKey, signature: Uint8Array, listKeys: bigint[]): Promise<ZkAttestation> => {
+export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: CryptoKey, signature: Uint8Array, listKeys: bigint[], index = 0): Promise<ZkAttestation> => {
   const params = generateParamsList();
   const zkAttestProof = await proveSignatureList(
     params,
     msgHash,
     signature,
     publicKey,
-    0, // It’s always 0 because we first unshift the key we are validating.
+    index,
     listKeys
   );
   console.log("🧾 ZKAttest Proof", zkAttestProof);

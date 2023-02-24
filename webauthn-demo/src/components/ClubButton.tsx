@@ -6,12 +6,12 @@ export const ClubButton = () => {
   const { addClub, counter } = useSetup();
 
   const createClubHandler = async () => {
-    console.log("🫂 Trying to create club.")
+    console.log("🫂 Trying to create circle.")
     // @TODO: Identify { errors } response to notify user.
     const createClubsResponse = await createClub('ETH Denver');
     const club: Club = { node: createClubsResponse?.createKeyring?.document }
     addClub(club);
-    console.log("🫂 Club created.")
+    console.log("🫂 Circle created.")
   }
 
   const hasAtLeastOneClub = counter > 0;
@@ -22,6 +22,6 @@ export const ClubButton = () => {
       disabled={hasAtLeastOneClub}
       onClick={() => createClubHandler()}
     >
-      {hasAtLeastOneClub ? 'Create Club 🫂 (Locked)' : 'Create Club 🫂'}
+      {hasAtLeastOneClub ? 'Create Circle ⭕️ (Locked)' : 'Create Circle ⭕️'}
     </Button>)
 }

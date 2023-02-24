@@ -43,7 +43,7 @@ const CeramicProvider = ({ children }: CeramicProviderProps) => {
 
     // TODO connect should be moved to another auth provider
     // that listen to the account change
-    await connect();
+    // await connect();
   };
 
   const connect = async () => {

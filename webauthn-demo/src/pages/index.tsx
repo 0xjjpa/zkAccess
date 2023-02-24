@@ -34,7 +34,7 @@ const Index = () => {
   // const [isLoadingProcess, setLoadingProcess] = useState(false);
   // const [isAssertationValid, setAssertation] = useState<boolean>();
   const [dataPayload, setDataPayload] = useState<Uint8Array>();
-  const [signature, setSignature] = useState<ArrayBuffer>();
+  const [signature, setSignature] = useState<Uint8Array>();
 
   const [isLoadingStage, setLoadingStage] = useState(false);
   const [isCeramicNodeOffline, setIsCeramicNodeOffline] = useState(false);
@@ -44,9 +44,10 @@ const Index = () => {
   const [publicKeyAsHex, setPublicKeyAsHex] = useState<string>();
 
   const { isConnected } = useAccount();
-  const { session } = useCeramic();
+  const { session, connect } = useCeramic();
 
   const hasWalletConnected = isConnected;
+  const hasCeramicAccountConnected = isConnected && session;
 
   // @TODO: Identify whether this is still needed.
   // useEffect(() => {
@@ -86,19 +87,32 @@ const Index = () => {
       <Hero />
       <Main>
         <ConnectButton />
+        {hasWalletConnected && !hasCeramicAccountConnected &&
+          <Button onClick={connect}>
+            <Image
+              style={{ marginRight: '10px' }}
+              alt="Ceramic"
+              width={18}
+              height={16}
+              src="/ceramic.png"
+            />Connect to Ceramic
+          </Button>
+        }
         <Text color="text" fontFamily="mono" textAlign="center">
-          Create clubs and add people by scanning their <Code>zKeys</Code>.
-          Verify membership via zero-knowledge proofs.
+          Create secret circles and add people anonymously by scanning their <Code>zKeys</Code>.
+        </Text>
+        <Text color="text" fontFamily="mono" textAlign="center">
+          People generate zero-knowledge proofs to prove a circle's membership.
         </Text>
         {isCeramicNodeOffline && <Code p="2">❗️ Ceramic endpoint offline. Try later or reach @0xjjpa on Twitter.</Code>}
-        {!isCeramicNodeOffline && hasWalletConnected &&
+        {!isCeramicNodeOffline && hasCeramicAccountConnected &&
           <>
             <ClubsContainer
               setStage={setStage}
               setup={
                 <SimpleGrid spacing={2} columns={1}>
                   <ClubButton />
-                  <Button size="sm" disabled>Load Club 📀 (WIP)</Button>
+                  <Button size="sm" disabled>Load Circle 💾 (Soon™)</Button>
                 </SimpleGrid>
               }
               manage={
