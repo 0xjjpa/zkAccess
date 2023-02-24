@@ -18,7 +18,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
   const [publicKeyAsHex, setPublicKeyAsHex] = useState<string>();
   const [StreamIDAsQRCodedHex, setStreamIDAsQRCodedHex] = useState<string>("");
   const [hasRegisteredStreamID, setHasRegisteredStreamID] = useState<boolean>();
-  const [zkAttestation, setZkAttestation] = useState<ZkAttestation>();
+  const [zkAttestationUrl, setZkAttestationUrl] = useState<string>();
   const [memberIsInClub, setMemberIsInClub] = useState<string[]>([]);
 
   const { session } = useCeramic();
@@ -60,8 +60,22 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
     console.log("📋 List of Keys", listKeys);
     const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);
     console.log("(🧾,ℹ️) Attestation created", attestation);
-    // @TODO: Ay lmao the proof is roughly 0.6mbs
-    setZkAttestation(attestation);
+    const fetchOptions = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json;charset=UTF-8",
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_API_KEY}`
+      },
+      body: JSON.stringify({
+        params: writeJson(SystemParametersList, attestation.params),
+        proof: writeJson(SignatureProofList, attestation.proof),
+      }),
+    }
+    const response = await (await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', fetchOptions)).json()
+    // @TODO: Ay lmao the proof is roughly 0.6mb
+    console.log("(🧾,ℹ️) Attestation uploaded", response);
+    setZkAttestationUrl(`https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`);
   }
 
   return (
@@ -82,17 +96,17 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
             {
               enableBarcodeScanner ?
                 !!StreamIDAsQRCodedHex ?
-                  !!zkAttestation ?
+                  !!zkAttestationUrl ?
                   <>
-                    <Text fontSize="sm">✅ You have created a valid proof</Text>
+                    <Text fontSize="sm">✅ You have created a valid membership proof</Text>
                     <Box m="2">
                       <Text>Here is the zero knowledge proof you need to show up.</Text>
+                      <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Proof</Text><QrCode payload={zkAttestationUrl} /></Flex>
                       <Box mt="5">
-                        <Text >Displaying this proof will not disclose anything about who you are within the club you are
-                          trying to showcase you are a member of.
+                        <Text fontSize="sm">Displaying this proof will show you belong to the club you generated the proof for, without disclosing
+                        who you are within the club. If you do not belong into the club, the proof will be rejected.
                         </Text>
                       </Box>
-                      <Flex my="2" direction="column"><Text fontWeight="bold" textAlign="center">Proof</Text><QrCode payload={"Lol."} /></Flex>
                     </Box>
                   </> :
                   <>
@@ -134,7 +148,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
               <Button colorScheme="blue" onClick={async () => {
                 await verifySignatureHandler(StreamIDAsQRCodedHex)
               }}>Verify Signature 🪪</Button> :
-              isOpen && !!StreamIDAsQRCodedHex ? zkAttestation ? <></> : <Button onClick={() => createProofHandler()} colorScheme="green">Create Proof 🧾</Button> :
+              isOpen && !!StreamIDAsQRCodedHex ? zkAttestationUrl ? <></> : <Button onClick={() => createProofHandler()} colorScheme="green">Create Proof 🧾</Button> :
                 <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
                   {enableBarcodeScanner ? 'Close Camera 📷' : 'Open Camera 📸'}
                 </Button>}
