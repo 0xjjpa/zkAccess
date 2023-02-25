@@ -1,3 +1,3 @@
 module.exports = {
-    transpilePackages: ['react-barcode-scanner'],
+    transpilePackages: ['@cloudflare/zkp-ecdsa'],
   }

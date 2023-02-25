@@ -24,6 +24,8 @@ export const importPublicKey = async (publicKey: ArrayBuffer): Promise<CryptoKey
 }
 
 export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: CryptoKey, signature: Uint8Array, listKeys: bigint[], index = 0): Promise<ZkAttestation> => {
+  console.log(`(👁️,❌) Zero Knowledge params - Keys’ length: ${listKeys.length}, Index: ${index}, hasPublicKey: ${!!publicKey}, hasSignature: ${!!signature}, hasHash: ${!!msgHash}`)
+  console.log(`(👁️,❌) Zero Knowledge types - PublicKey: ${typeof publicKey}, Signature: ${typeof signature}, HashMessage: ${typeof msgHash}`)
   const params = generateParamsList();
   const zkAttestProof = await proveSignatureList(
     params,

@@ -1,4 +1,4 @@
-import { Text, Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, Flex } from "@chakra-ui/react";
+import { useToast, Text, Box, Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, Flex } from "@chakra-ui/react";
 import { keyToInt, readJson, SignatureProofList, SystemParametersList, writeJson } from "@cloudflare/zkp-ecdsa";
 import { useEffect, useState } from "react";
 import { useCeramic } from "../context/ceramic";
@@ -12,8 +12,10 @@ import { BarcodeScanner } from "./BarcodeScanner";
 import { ClubMembers } from "./ClubMembers";
 import { QrCode } from "./QRCode";
 
+
 export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature: Uint8Array, dataPayload: Uint8Array, publicKey: ArrayBuffer }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
   const [isLoading, setLoading] = useState(false);
   const [enableBarcodeScanner, setEnableBarcodeScanner] = useState(false);
   const [publicKeyAsHex, setPublicKeyAsHex] = useState<string>();
@@ -110,7 +112,35 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
       return keyAsInt
     }));
     console.log("📋 List of Keys, my Key and Index", listKeys, await keyToInt(await importPublicKey(hex2buf(publicKeyAsHex))), index);
-    const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys, index != listKeys.length ? index : 0);
+    if (listKeys.length <= 1) {
+      console.log("(🔴,ℹ️) Proofs break with less than two members in array");
+      toast({
+        title: 'Proof can’t be created',
+        description: "There needs to be at least two members in the club to create proofs.",
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      })
+      setLoading(false);
+      return;
+    }
+    const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys, index < listKeys.length ? index : 0);
+    console.log('🧾 Attestation', attestation.proof, attestation.params);
+    const proof = writeJson(SignatureProofList, attestation.proof);
+    const params = writeJson(SystemParametersList, attestation.params);
+    console.log('🧾 Attestation (as string)', proof, params);
+    if (!proof || !params) {
+      console.log("(🔴,ℹ️) We were unable to create proofs or params for the given array");
+      toast({
+        title: 'Proof can’t be created',
+        description: "Please try again. Sometimes the proof doesn’t work and you just need to retry.",
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      })
+      setLoading(false);
+      return;
+    }
     const fetchOptions = {
       method: "POST",
       headers: {
@@ -119,8 +149,8 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_API_KEY}`
       },
       body: JSON.stringify({
-        params: writeJson(SystemParametersList, attestation.params),
-        proof: writeJson(SignatureProofList, attestation.proof),
+        params,
+        proof,
         msgHash: buf2hex(msgHash)
       }),
     }
@@ -133,7 +163,6 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
 
   const clearComponent = () => {
     setEnableBarcodeScanner(false);
-    setPublicKeyAsHex(undefined);
     setStreamIDAsQRCodedHex("");
     setIsStreamID(undefined);
     setIsZkProofValid(undefined);

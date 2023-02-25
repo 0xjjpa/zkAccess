@@ -1,5 +1,6 @@
 import { Button, Code, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { STAGES, Stage } from "../constants/stages";
 import { USER } from "../constants/webauthn";
 import { useCeramic } from "../context/ceramic";
@@ -22,6 +23,7 @@ export const SelfRegisterButton = ({ rawId, publicKey, signature, setRawId, setP
 
   const { keys: existingKeys, setKeys, streamId } = useClub();
   const { session } = useCeramic();
+  const { address } = useAccount();
 
 
   const loadCredentialsHandler = async () => {
@@ -117,7 +119,7 @@ export const SelfRegisterButton = ({ rawId, publicKey, signature, setRawId, setP
         isLoading={isLoading}
         onClick={() => {
           !rawId
-            ? createCredentialsHandler(USER.email, USER.name) // Create new account.
+            ? createCredentialsHandler(USER(address).email, USER(address).name) // Create new account.
             : !signature ?
               loadCredentialsHandler() // @TODO: Remove from array (not really possible so...)
               : hasKeyAlreadyIn ? displayDID() : addCredentialsHelper()
