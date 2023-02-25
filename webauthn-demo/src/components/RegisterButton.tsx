@@ -80,7 +80,7 @@ export const RegisterButton = () => {
             {hasValidPublicKey ?
               <Button colorScheme="green" onClick={async () => {
                 await registerKeyHandler(publicKeyAsQRCodedHex)
-                onClose()
+                clearComponent()
               }}>Add to circle 🪪</Button> :
               <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
                 {enableBarcodeScanner ? 'Close Camera 📷' : 'Register zKey 📸'}
