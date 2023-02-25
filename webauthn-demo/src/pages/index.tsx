@@ -30,9 +30,6 @@ import { VerifyButton } from "../components/VerifyButton";
 
 
 const Index = () => {
-  // @TODO: Identify if this is still needed.
-  // const [isLoadingProcess, setLoadingProcess] = useState(false);
-  // const [isAssertationValid, setAssertation] = useState<boolean>();
   const [dataPayload, setDataPayload] = useState<Uint8Array>();
   const [signature, setSignature] = useState<Uint8Array>();
 
@@ -49,16 +46,6 @@ const Index = () => {
   const hasWalletConnected = isConnected;
   const hasCeramicAccountConnected = isConnected && session;
 
-  // @TODO: Identify whether this is still needed.
-  // useEffect(() => {
-  //   isAssertationValid != undefined &&
-  //     setStage(
-  //       isAssertationValid
-  //         ? Stage.STAGE_SUCCESS_ASSERTATION
-  //         : Stage.STAGE_FAILED_ASSERTATION
-  //     );
-  //   setLoadingProcess(false);
-  // }, [isAssertationValid]);
 
   const loadRawId = async () => {
     console.log('🪪 Loading credentials from user...', session.did.parent)

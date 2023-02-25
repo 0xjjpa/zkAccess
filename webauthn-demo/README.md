@@ -8,7 +8,6 @@ to store user's public keys (`zkeys`) to derive the attestations from.
 
 - [ ] Invalid account create "Permission not allowed" error stops the UI from doing anything.
 - [ ] When ID added for the first time to Club, the "(You)" label isn’t shown right away.
-- [ ] 🔴 After registering someone, we don’t clean the state and can’t add other people.
 - [ ] After scanning a Circle ID, you don’t see right away the circle members.
 - [ ] Creating a proof takes time, but shows no loading spinner or immediate feedback to the user.
 - [ ] 🔴 Once the proof was created, we are again stuck in that workflow and can't restart it.

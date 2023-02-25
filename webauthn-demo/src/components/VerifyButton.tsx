@@ -65,12 +65,12 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
         const parsedParams = readJson(SystemParametersList, response.params);
         const msgHash = hex2buf(response.msgHash);
         const listKeys = await Promise.all(keys.map(async (membersAsPublicKeysInHexFormat) => {
+          if(!membersAsPublicKeysInHexFormat) return;
           const publicKey = hex2buf(membersAsPublicKeysInHexFormat);
           const key = await importPublicKey(publicKey);
           const keyAsInt = await keyToInt(key);
           return keyAsInt
         }));
-        console.log("📋 List of Keys, my Key", listKeys, await keyToInt(await importPublicKey(hex2buf(publicKeyAsHex))));
         const isValid = await verifyZkAttestProof(msgHash, listKeys, { params: parsedParams, proof: parsedProof });
         console.log('( , ) - IsValid response?', isValid);
         setIsZkProofValid(isValid);
@@ -93,6 +93,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
   }, [StreamIDAsQRCodedHex])
 
   const createProofHandler = async () => {
+    setLoading(true);
     const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', dataPayload));
     const key = await importPublicKey(publicKey);
     let index = 0;
@@ -110,15 +111,6 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
     }));
     console.log("📋 List of Keys, my Key and Index", listKeys, await keyToInt(await importPublicKey(hex2buf(publicKeyAsHex))), index);
     const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys, index != listKeys.length ? index : 0);
-    //@TODO: Remove in production.
-    console.log("⏳ Roundtrip for testing parsing/exporting");
-    const jsonProof = writeJson(SignatureProofList, attestation.proof);
-    const jsonParams = writeJson(SystemParametersList, attestation.params);
-    const parsedProof = readJson(SignatureProofList, jsonProof);
-    const parsedParams = readJson(SystemParametersList, jsonParams);
-    const isValid = await verifyZkAttestProof(msgHash, listKeys, { params: parsedParams, proof: parsedProof });
-    console.log("Is ZkProof Valid?", isValid);
-    console.log("(🧾,ℹ️) Attestation created", attestation);
     const fetchOptions = {
       method: "POST",
       headers: {
@@ -136,6 +128,19 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
     // @TODO: Ay lmao the proof is roughly 0.6mb
     console.log("(🧾,ℹ️) Attestation uploaded", response);
     setZkAttestationUrl(`https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`);
+    setLoading(false);
+  }
+
+  const clearComponent = () => {
+    setEnableBarcodeScanner(false);
+    setPublicKeyAsHex(undefined);
+    setStreamIDAsQRCodedHex("");
+    setIsStreamID(undefined);
+    setIsZkProofValid(undefined);
+    setHasRegisteredStreamID(undefined);
+    setZkAttestationUrl(undefined);
+    setMemberIsInClub([]);
+    onClose();
   }
 
   return (
@@ -148,7 +153,7 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
       >
         {`Verify Access 🧾`}
       </Button>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={clearComponent}>
         <ModalOverlay />
         <ModalContent mx="5">
           <ModalHeader>Verify Access 🧾</ModalHeader>
@@ -223,11 +228,11 @@ export const VerifyButton = ({ signature, dataPayload, publicKey }: { signature:
               <Button colorScheme="blue" onClick={async () => {
                 await verifySignatureHandler(StreamIDAsQRCodedHex)
               }}>Verify Signature 🪪</Button> :
-              isOpen && !!StreamIDAsQRCodedHex ? zkAttestationUrl ? <></> : isZkProofValid == undefined && <Button onClick={() => createProofHandler()} colorScheme="green">Create Proof 🧾</Button> :
+              isOpen && !!StreamIDAsQRCodedHex ? zkAttestationUrl ? <></> : isZkProofValid == undefined && <Button isLoading={isLoading} onClick={() => createProofHandler()} colorScheme="green">Create Proof 🧾</Button> :
                 <Button colorScheme='blue' mr={3} onClick={() => setEnableBarcodeScanner(!enableBarcodeScanner)}>
                   {enableBarcodeScanner ? 'Close Camera 📷' : 'Open Camera 📸'}
                 </Button>}
-            <Button variant='ghost' onClick={onClose}>Close</Button>
+            <Button variant='ghost' onClick={clearComponent}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
