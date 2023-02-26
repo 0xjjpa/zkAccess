@@ -1,3 +1,6 @@
 module.exports = {
-    transpilePackages: ['@cloudflare/zkp-ecdsa'],
-  }
+  webpack: (config) => {
+    config.optimization.minimize = false;
+    return config;
+  },
+}
