@@ -1,12 +1,14 @@
-import { keyToInt, generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList } from '@cloudflare/zkp-ecdsa'
+import { generateParamsList, proveSignatureList, SignatureProofList, verifySignatureList, SystemParametersList, writeJson, Newable, readJson } from '@cloudflare/zkp-ecdsa'
+import { buf2hex, hex2buf } from '../helpers/buffers'
 
 export type ZkAttestation = {
   params: SystemParametersList,
   proof: SignatureProofList
 }
 
-export const importPublicKey = async (credential: PublicKeyCredential): Promise<CryptoKey> => {
-  const publicKey = (credential.response as AuthenticatorAttestationResponse).getPublicKey()
+export const importPublicKey = async (publicKey: ArrayBuffer): Promise<CryptoKey> => {
+  console.log('🔑 Public Key loaded from credential response', publicKey);
+  console.log('🔑 Public Key but as Hex', buf2hex(publicKey));
   const key = await crypto.subtle.importKey(
     "spki", // "spki" Simple Public Key Infrastructure rfc2692
     publicKey,
@@ -21,14 +23,16 @@ export const importPublicKey = async (credential: PublicKeyCredential): Promise<
   return key;
 }
 
-export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: CryptoKey, signature: Uint8Array, listKeys: bigint[]): Promise<ZkAttestation> => {
+export const generateZkAttestProof = async (msgHash: Uint8Array, publicKey: CryptoKey, signature: Uint8Array, listKeys: bigint[], index = 0): Promise<ZkAttestation> => {
+  console.log(`(👁️,❌) Zero Knowledge params - Keys’ length: ${listKeys.length}, Index: ${index}, hasPublicKey: ${!!publicKey}, hasSignature: ${!!signature}, hasHash: ${!!msgHash}`)
+  console.log(`(👁️,❌) Zero Knowledge types - PublicKey: ${typeof publicKey}, Signature: ${typeof signature}, HashMessage: ${typeof msgHash}`)
   const params = generateParamsList();
   const zkAttestProof = await proveSignatureList(
     params,
     msgHash,
     signature,
     publicKey,
-    0, // It’s always 0 because we first unshift the key we are validating.
+    index,
     listKeys
   );
   console.log("🧾 ZKAttest Proof", zkAttestProof);
@@ -40,13 +44,19 @@ export const verifyZkAttestProof = async(msgHash: Uint8Array, listKeys: bigint[]
   return valid;
 }
 
-export const createZkAttestProofAndVerify = async(keys: bigint[], credential: PublicKeyCredential, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
+export const createZkAttestProofAndVerify = async(keys: bigint[], publicKey: ArrayBuffer, data: Uint8Array, signature: Uint8Array): Promise<boolean> => {
   const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
-  const key = await importPublicKey(credential);
+  const key = await importPublicKey(publicKey);
   const listKeys = keys;
   console.log("📋 List of Keys", listKeys);
   const attestation = await generateZkAttestProof(msgHash, key, signature, listKeys);
-  const isValid = await verifyZkAttestProof(msgHash, listKeys, attestation);
+  //@TODO: Remove in production.
+  console.log("⏳ Roundtrip for testing parsing/exporting");
+  const jsonProof = writeJson(SignatureProofList, attestation.proof);
+  const jsonParams = writeJson(SystemParametersList, attestation.params);
+  const parsedProof = readJson(SignatureProofList, jsonProof);
+  const parsedParams = readJson(SystemParametersList, jsonParams);
+  const isValid = await verifyZkAttestProof(msgHash, listKeys, { params: parsedParams, proof: parsedProof });
   console.log("Is ZkProof Valid?", isValid);
   return isValid;
 }

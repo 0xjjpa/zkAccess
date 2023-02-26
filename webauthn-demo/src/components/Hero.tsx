@@ -4,14 +4,15 @@ export const Hero = ({ title }: { title: string }) => (
   <Flex
     justifyContent="center"
     alignItems="center"
-    height="100vh"
+    height="30vh"
     bgGradient="linear(to-l, heroGradientStart, heroGradientEnd)"
     bgClip="text"
+    mt="5"
   >
     <Heading fontSize="6vw">{title}</Heading>
   </Flex>
 )
 
 Hero.defaultProps = {
-  title: 'Webauthn + zkECDSA',
+  title: 'zkAccess',
 }

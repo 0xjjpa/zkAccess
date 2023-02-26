@@ -1,0 +1,61 @@
+{
+    "models": {
+        "Account": {
+            "id": "kjzl6hvfrbw6c9p2akops9y0q83oa8if0vk4uj7vbbogzisfsd729fnkm8m8ywp",
+            "accountRelation": {
+                "type": "single"
+            }
+        },
+        "Keyring": {
+            "id": "kjzl6hvfrbw6c9ri4hozxz4bdni7v9o61sxo5dps0mqpvj0gicr13h7md8ynb1s",
+            "accountRelation": {
+                "type": "list"
+            }
+        }
+    },
+    "objects": {
+        "Account": {
+            "rawId": {
+                "type": "string",
+                "required": true
+            },
+            "publicKey": {
+                "type": "string",
+                "required": true
+            },
+            "owner": {
+                "type": "view",
+                "viewType": "documentAccount"
+            }
+        },
+        "Keyring": {
+            "keys": {
+                "type": "list",
+                "required": false,
+                "item": {
+                    "type": "string",
+                    "required": false
+                }
+            },
+            "title": {
+                "type": "string",
+                "required": true
+            },
+            "owner": {
+                "type": "view",
+                "viewType": "documentAccount"
+            }
+        }
+    },
+    "enums": {},
+    "accountData": {
+        "account": {
+            "type": "node",
+            "name": "Account"
+        },
+        "keyringList": {
+            "type": "connection",
+            "name": "Keyring"
+        }
+    }
+}
